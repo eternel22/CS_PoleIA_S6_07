@@ -31,6 +31,7 @@ def get_cifar10(root, cfg_trainer, train=True,
 
         train_dataset = CIFAR10_train(root, cfg_trainer, train_idxs, train=True, transform=transform_train, seed=seed)
         val_dataset = CIFAR10_val(root, cfg_trainer, val_idxs, train=train, transform=transform_val)
+        cfg_trainer['instance'] = 0
         if cfg_trainer['instance']:
             train_dataset.instance_noise()
             val_dataset.instance_noise()
