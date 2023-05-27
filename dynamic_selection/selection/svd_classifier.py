@@ -16,7 +16,7 @@ def get_mean_vector(features, labels):
             v = np.mean(features[labels==index], axis=0)
             mean_vector_dict[index] = v
             pbar.update(1)
-            
+    print("mean vector aquired")        
     return mean_vector_dict
             
 def get_singular_vector(features, labels):
@@ -32,7 +32,7 @@ def get_singular_vector(features, labels):
             _, _, v = np.linalg.svd(features[labels==index])
             singular_vector_dict[index] = v[0]
             pbar.update(1)
-
+    print("singular_vecotr_aquired")
     return singular_vector_dict
 
 
@@ -44,7 +44,7 @@ def get_score(singular_vector_dict, features, labels, normalization=True):
         scores = [np.abs(np.inner(singular_vector_dict[labels[indx]], feat/np.linalg.norm(feat))) for indx, feat in enumerate(tqdm(features))]
     else:
         scores = [np.abs(np.inner(singular_vector_dict[labels[indx]], feat)) for indx, feat in enumerate(tqdm(features))]
-        
+    print("score_aquired")    
     return np.array(scores)
 
 def extract_topk(scores, labels, k):
@@ -62,7 +62,7 @@ def extract_topk(scores, labels, k):
         num = int(p * np.sum(labels==cls))
         _, sorted_idx = torch.sort(scores[labels==cls], descending=True)
         selected_labels += indexes[labels==cls][sorted_idx[:num]].numpy().tolist()
-        
+    print("extract_toptk")    
     return torch.tensor(selected_labels, dtype=torch.int64)
 
 def cleansing(scores, labels):
@@ -81,7 +81,7 @@ def cleansing(scores, labels):
         if np.mean(scores[cls_index][kmeans.labels_==0]) < np.mean(scores[cls_index][kmeans.labels_==1]): kmeans.labels_ = 1 - kmeans.labels_
             
         clean_labels += cls_index[kmeans.labels_ == 0].tolist()
-        
+    print("HOLY LUSTRATION")    
     return np.array(clean_labels, dtype=np.int64)
         
 
@@ -117,7 +117,7 @@ def fine(current_features, current_labels, fit='kmeans', prev_features=None, pre
         clean_labels = fit_mixture_bmm(scores, current_labels)
     else:
         raise NotImplemented
-    
+    print("SVD FINE CALLED")
     return clean_labels
 
 def extract_cleanidx(teacher, data_loader, parse, print_statistics = True):
@@ -154,5 +154,5 @@ def extract_cleanidx(teacher, data_loader, parse, print_statistics = True):
         file_root = '/'.join(map(str, root_list))
 
         df.to_csv(file_root, index=False, header=True, sep="\t")      
-        
+    print("cleanidx_extracted")   
     return clean_labels
