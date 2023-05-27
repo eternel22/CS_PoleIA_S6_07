@@ -32,7 +32,7 @@ def fit_mixture(scores, labels, p_threshold=0.5):
         gmm.fit(feats_)
         prob = gmm.predict_proba(feats_)
         prob = prob[:,gmm.means_.argmax()]
-        clean_labels += [cls_index[clean_idx] for clean_idx in range(len(cls_index)) 
+        clean_labels += [cls_index[clean_idx] for clean_idx in range(len(cls_index)) ]
         
     print("label_succesfully NOT  corrected")
     return np.array(clean_labels, dtype=np.int64)
