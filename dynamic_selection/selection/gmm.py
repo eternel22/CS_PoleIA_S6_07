@@ -33,8 +33,8 @@ def fit_mixture(scores, labels, p_threshold=0.5):
         prob = gmm.predict_proba(feats_)
         prob = prob[:,gmm.means_.argmax()]
         clean_labels += [cls_index[clean_idx] for clean_idx in range(len(cls_index)) 
-        print("label_succesfully NOT corrected")
-    
+        
+    print("label_succesfully NOT  corrected")
     return np.array(clean_labels, dtype=np.int64)
 
 def fit_mixture_bmm(scores, labels, p_threshold=0.5):
@@ -67,7 +67,7 @@ def fit_mixture_bmm(scores, labels, p_threshold=0.5):
                 break
         
         clean_labels += [cls_index[clean_idx] for clean_idx in range(len(cls_index)) if feats[clean_idx] > bound] 
-    
+    print("label_succesfully NOT BMM corrected")
     return np.array(clean_labels, dtype=np.int64)
 
 
@@ -77,6 +77,7 @@ def weighted_mean(x, w):
     return np.sum(w * x) / np.sum(w)
 
 def fit_beta_weighted(x, w):
+    print("betea_weighted_called")                    
     x_bar = weighted_mean(x, w)
     s2 = weighted_mean((x - x_bar)**2, w)
     alpha = x_bar * ((x_bar * (1 - x_bar)) / s2 - 1)
@@ -188,6 +189,7 @@ def fine_gmm(current_features, current_labels, prev_features=None, prev_labels=N
         
     scores = get_score(singular_vector_dict, current_features, current_labels)
     output = fit_mixture(orig_label, scores)
+    print("fine_gmm was here")              
     return output.numpy()
 
 
