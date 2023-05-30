@@ -7,10 +7,7 @@ import json
 import os
 import torch
 from torchnet.meter import AUCMeter
-
-NB_TRAINING_DATA = 40000 / 10
-NB_TEST_DATA = 10000
-NB_VALID_DATA = 10000 / 10
+from Train_cifar import NB_TEST_DATA, NB_TRAINING_DATA, NB_VALID_DATA
 
 def unpickle(file):
     import _pickle as cPickle

@@ -12,7 +12,10 @@ import numpy as np
 from PreResNet import *
 from sklearn.mixture import GaussianMixture
 import dataloader_cifar as dataloader
-from dataloader_cifar import NB_TRAINING_DATA, NB_TEST_DATA, NB_VALID_DATA
+
+NB_TRAINING_DATA = 40000
+NB_TEST_DATA = 10000
+NB_VALID_DATA = 10000
 
 parser = argparse.ArgumentParser(description='PyTorch CIFAR Training')
 parser.add_argument('--batch_size', default=64, type=int, help='train batchsize') 
@@ -30,13 +33,16 @@ parser.add_argument('--gpuid', default=0, type=int)
 parser.add_argument('--num_class', default=10, type=int)
 parser.add_argument('--data_path', default='./cifar-10', type=str, help='path to dataset')
 parser.add_argument('--dataset', default='cifar10', type=str)
+parser.add_argument('--limitData', default=0, type=int)
 args = parser.parse_args()
 
 torch.cuda.set_device(args.gpuid)
 random.seed(args.seed)
 torch.manual_seed(args.seed)
 torch.cuda.manual_seed_all(args.seed)
-
+if(args.limitData == 1):
+    NB_TRAINING_DATA = NB_TRAINING_DATA // 10
+    NB_VALID_DATA = NB_VALID_DATA // 10
 
 # Training
 def train(epoch,net,net2,optimizer,labeled_trainloader,unlabeled_trainloader):
