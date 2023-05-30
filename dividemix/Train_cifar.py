@@ -44,6 +44,8 @@ def train(epoch,net,net2,optimizer,labeled_trainloader,unlabeled_trainloader):
     
     unlabeled_train_iter = iter(unlabeled_trainloader)    
     num_iter = (len(labeled_trainloader.dataset)//args.batch_size)+1
+    correct = 0
+    total = 0
     for batch_idx, (inputs_x, inputs_x2, labels_x, w_x) in enumerate(labeled_trainloader):      
         try:
             inputs_u, inputs_u2 = unlabeled_train_iter.next()
@@ -101,6 +103,14 @@ def train(epoch,net,net2,optimizer,labeled_trainloader,unlabeled_trainloader):
         logits = net(mixed_input)
         logits_x = logits[:batch_size*2]
         logits_u = logits[batch_size*2:]        
+
+        _, predicted = torch.max(logits, 1)
+        total += mixed_target.size(0)
+        correct += predicted.eq(mixed_target).cpu().sum().item()
+        if(total != 0):
+            acc = 100.*correct/total
+        else:
+            acc = 0
            
         Lx, Lu, lamb = criterion(logits_x, mixed_target[:batch_size*2], logits_u, mixed_target[batch_size*2:], epoch+batch_idx/num_iter, warm_up)
         
@@ -117,8 +127,8 @@ def train(epoch,net,net2,optimizer,labeled_trainloader,unlabeled_trainloader):
         optimizer.step()
         
         sys.stdout.write('\r')
-        sys.stdout.write('%s:%.1f-%s | Epoch [%3d/%3d] Iter[%3d/%3d]\t Labeled loss: %.2f  Unlabeled loss: %.2f'
-                %(args.dataset, args.r, args.noise_mode, epoch, args.num_epochs, batch_idx+1, num_iter, Lx.item(), Lu.item()))
+        sys.stdout.write('%s:%.1f-%s | Epoch [%3d/%3d] Iter[%3d/%3d]\t Labeled loss: %.2f  Unlabeled loss: %.2f Train_Accuracy: %.2f%%'
+                %(args.dataset, args.r, args.noise_mode, epoch, args.num_epochs, batch_idx+1, num_iter, Lx.item(), Lu.item(), acc))
         sys.stdout.flush()
 
 def warmup(epoch,net,optimizer,dataloader):
@@ -149,7 +159,7 @@ def warmup(epoch,net,optimizer,dataloader):
         optimizer.step() 
 
         sys.stdout.write('\r')
-        sys.stdout.write('%s:%.1f-%s | Epoch [%3d/%3d] Iter[%3d/%3d]\t Train_Loss: %.4f Train_Accuracy: %.4f'
+        sys.stdout.write('%s:%.1f-%s | Epoch [%3d/%3d] Iter[%3d/%3d]\t Train_Loss: %.4f Train_Accuracy: %.2f%%'
                 %(args.dataset, args.r, args.noise_mode, epoch, args.num_epochs, batch_idx+1, num_iter, loss.item(), acc))
         sys.stdout.flush()
 
