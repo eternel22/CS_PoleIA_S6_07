@@ -12,8 +12,7 @@ import numpy as np
 from PreResNet import *
 from sklearn.mixture import GaussianMixture
 import dataloader_cifar as dataloader
-
-NB_TRAINING_DATA = 40000
+from dataloader_cifar import NB_TRAINING_DATA, NB_TEST_DATA, NB_VALID_DATA
 
 parser = argparse.ArgumentParser(description='PyTorch CIFAR Training')
 parser.add_argument('--batch_size', default=64, type=int, help='train batchsize') 
@@ -261,8 +260,6 @@ test_log=open('./checkpoint/%s_%.1f_%s'%(args.dataset,args.r,args.noise_mode)+'_
 
 if args.dataset=='cifar10':
     warm_up = 10
-elif args.dataset=='cifar100':
-    warm_up = 30
 
 loader = dataloader.cifar_dataloader(args.dataset,r=args.r,noise_mode=args.noise_mode,batch_size=args.batch_size,num_workers=2,\
     root_dir=args.data_path,log=stats_log,noise_file='%s/%.1f_%s.json'%(args.data_path,args.r,args.noise_mode))

@@ -8,7 +8,9 @@ import os
 import torch
 from torchnet.meter import AUCMeter
 
-NB_TRAINING_DATA = 40000
+NB_TRAINING_DATA = 40000 / 10
+NB_TEST_DATA = 10000
+NB_VALID_DATA = 10000 / 10
 
 def unpickle(file):
     import _pickle as cPickle
@@ -27,18 +29,18 @@ class cifar_dataset(Dataset):
         if self.mode=='test':
             if dataset=='cifar10':                
                 test_dic = unpickle('%s/test_batch'%root_dir)
-                self.test_data = test_dic['data']
-                self.test_data = self.test_data.reshape((10000, 3, 32, 32))
+                self.test_data = test_dic['data'][:NB_TEST_DATA]
+                self.test_data = self.test_data.reshape((NB_TEST_DATA, 3, 32, 32))
                 self.test_data = self.test_data.transpose((0, 2, 3, 1))  
-                self.test_label = test_dic['labels']
+                self.test_label = test_dic['labels'][:NB_TEST_DATA]
         
         elif self.mode == "valid":
             if dataset=='cifar10':                
                 valid_dic = unpickle('%s/data_batch_%d'%(root_dir,5))
-                self.valid_data = valid_dic['data']
-                self.valid_data = self.valid_data.reshape((10000, 3, 32, 32))
+                self.valid_data = valid_dic['data'][:NB_VALID_DATA]
+                self.valid_data = self.valid_data.reshape((NB_VALID_DATA, 3, 32, 32))
                 self.valid_data = self.valid_data.transpose((0, 2, 3, 1))  
-                self.valid_label = valid_dic['labels']
+                self.valid_label = valid_dic['labels'][:NB_VALID_DATA]
 
         else:    
             train_data=[]
@@ -47,8 +49,8 @@ class cifar_dataset(Dataset):
                 for n in range(1,5):
                     dpath = '%s/data_batch_%d'%(root_dir,n)
                     data_dic = unpickle(dpath)
-                    train_data.append(data_dic['data'])
-                    train_label = train_label+data_dic['labels']
+                    train_data.append(data_dic['data'][:NB_TRAINING_DATA/4])
+                    train_label = train_label+data_dic['labels'][:NB_TRAINING_DATA/4]
                 train_data = np.concatenate(train_data)
             train_data = train_data.reshape((NB_TRAINING_DATA, 3, 32, 32))
             train_data = train_data.transpose((0, 2, 3, 1))
