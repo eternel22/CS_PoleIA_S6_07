@@ -105,8 +105,9 @@ def train(epoch,net,net2,optimizer,labeled_trainloader,unlabeled_trainloader):
         logits_u = logits[batch_size*2:]        
 
         _, predicted = torch.max(logits, 1)
+        _, targetsApprox = torch.max(mixed_target, 1)
         total += mixed_target.size(0)
-        correct += predicted.eq(mixed_target).cpu().sum().item()
+        correct += predicted.eq(targetsApprox).cpu().sum().item()
         if(total != 0):
             acc = 100.*correct/total
         else:
