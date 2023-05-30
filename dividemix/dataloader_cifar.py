@@ -8,7 +8,8 @@ import os
 import torch
 from torchnet.meter import AUCMeter
 
-            
+NB_TRAINING_DATA = 40000
+
 def unpickle(file):
     import _pickle as cPickle
     with open(file, 'rb') as fo:
@@ -49,18 +50,18 @@ class cifar_dataset(Dataset):
                     train_data.append(data_dic['data'])
                     train_label = train_label+data_dic['labels']
                 train_data = np.concatenate(train_data)
-            train_data = train_data.reshape((50000, 3, 32, 32))
+            train_data = train_data.reshape((NB_TRAINING_DATA, 3, 32, 32))
             train_data = train_data.transpose((0, 2, 3, 1))
 
             if os.path.exists(noise_file):
                 noise_label = json.load(open(noise_file,"r"))
             else:    #inject noise   
                 noise_label = []
-                idx = list(range(50000))
+                idx = list(range(NB_TRAINING_DATA))
                 random.shuffle(idx)
-                num_noise = int(self.r*50000)            
+                num_noise = int(self.r*NB_TRAINING_DATA)            
                 noise_idx = idx[:num_noise]
-                for i in range(50000):
+                for i in range(NB_TRAINING_DATA):
                     if i in noise_idx:
                         if noise_mode=='sym':
                             if dataset=='cifar10': 

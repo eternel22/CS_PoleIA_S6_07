@@ -13,6 +13,8 @@ from PreResNet import *
 from sklearn.mixture import GaussianMixture
 import dataloader_cifar as dataloader
 
+NB_TRAINING_DATA = 40000
+
 parser = argparse.ArgumentParser(description='PyTorch CIFAR Training')
 parser.add_argument('--batch_size', default=64, type=int, help='train batchsize') 
 parser.add_argument('--lr', '--learning_rate', default=0.02, type=float, help='initial learning rate')
@@ -186,7 +188,7 @@ def test(epoch,net1,net2):
 
 def eval_train(model,all_loss):    
     model.eval()
-    losses = torch.zeros(50000)    
+    losses = torch.zeros(NB_TRAINING_DATA)    
     with torch.no_grad():
         for batch_idx, (inputs, targets, index) in enumerate(eval_loader):
             inputs, targets = inputs.cuda(), targets.cuda() 
