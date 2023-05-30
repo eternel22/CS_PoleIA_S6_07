@@ -237,7 +237,7 @@ stats_log=open('./checkpoint/%s_%.1f_%s'%(args.dataset,args.r,args.noise_mode)+'
 test_log=open('./checkpoint/%s_%.1f_%s'%(args.dataset,args.r,args.noise_mode)+'_acc.txt','w')     
 
 if args.dataset=='cifar10':
-    warm_up = 10
+    warm_up = 1 # 10
 elif args.dataset=='cifar100':
     warm_up = 30
 
