@@ -31,14 +31,14 @@ class cifar_dataset(Dataset):
                 self.test_data = self.test_data.reshape((10000, 3, 32, 32))
                 self.test_data = self.test_data.transpose((0, 2, 3, 1))  
                 self.test_label = test_dic['labels']
+        
         elif self.mode == "valid":
-            
             if dataset=='cifar10':                
                 valid_dic = unpickle('%s/data_batch_%d'%(root_dir,5))
-                self.test_data = valid_dic['data']
-                self.test_data = self.test_data.reshape((10000, 3, 32, 32))
-                self.test_data = self.test_data.transpose((0, 2, 3, 1))  
-                self.test_label = valid_dic['labels']
+                self.valid_data = valid_dic['data']
+                self.valid_data = self.valid_data.reshape((10000, 3, 32, 32))
+                self.valid_data = self.valid_data.transpose((0, 2, 3, 1))  
+                self.valid_label = valid_dic['labels']
 
         else:    
             train_data=[]
@@ -121,12 +121,19 @@ class cifar_dataset(Dataset):
             img = Image.fromarray(img)
             img = self.transform(img)            
             return img, target
+        elif self.mode=='valid':
+            img, target = self.valid_data[index], self.valid_label[index]
+            img = Image.fromarray(img)
+            img = self.transform(img)            
+            return img, target
            
     def __len__(self):
-        if self.mode!='test':
-            return len(self.train_data)
+        if self.mode=='test':
+            return len(self.test_data)
+        elif self.mode=='valid':
+            return len(self.valid_data)
         else:
-            return len(self.test_data)         
+            return len(self.train_data)         
         
         
 class cifar_dataloader():  
@@ -147,6 +154,10 @@ class cifar_dataloader():
                     transforms.Normalize((0.4914, 0.4822, 0.4465),(0.2023, 0.1994, 0.2010)),
                 ]) 
             self.transform_test = transforms.Compose([
+                    transforms.ToTensor(),
+                    transforms.Normalize((0.4914, 0.4822, 0.4465),(0.2023, 0.1994, 0.2010)),
+                ])    
+            self.transform_valid = transforms.Compose([
                     transforms.ToTensor(),
                     transforms.Normalize((0.4914, 0.4822, 0.4465),(0.2023, 0.1994, 0.2010)),
                 ])    
@@ -184,6 +195,15 @@ class cifar_dataloader():
                 shuffle=False,
                 num_workers=self.num_workers)          
             return test_loader
+        
+        elif mode=='valid':
+            valid_dataset = cifar_dataset(dataset=self.dataset, noise_mode=self.noise_mode, r=self.r, root_dir=self.root_dir, transform=self.transform_valid, mode='valid')      
+            valid_loader = DataLoader(
+                dataset=valid_dataset, 
+                batch_size=self.batch_size,
+                shuffle=False,
+                num_workers=self.num_workers)          
+            return valid_loader
         
         elif mode=='eval_train':
             eval_dataset = cifar_dataset(dataset=self.dataset, noise_mode=self.noise_mode, r=self.r, root_dir=self.root_dir, transform=self.transform_test, mode='all', noise_file=self.noise_file)      

@@ -186,6 +186,26 @@ def test(epoch,net1,net2):
     test_log.write('Epoch:%d   Accuracy:%.2f\n'%(epoch,acc))
     test_log.flush()  
 
+def valid(epoch,net1,net2):
+    net1.eval()
+    net2.eval()
+    correct = 0
+    total = 0
+    with torch.no_grad():
+        for batch_idx, (inputs, targets) in enumerate(valid_loader):
+            inputs, targets = inputs.cuda(), targets.cuda()
+            outputs1 = net1(inputs)
+            outputs2 = net2(inputs)           
+            outputs = outputs1+outputs2
+            _, predicted = torch.max(outputs, 1)            
+                       
+            total += targets.size(0)
+            correct += predicted.eq(targets).cpu().sum().item()                 
+    acc = 100.*correct/total
+    print("\n| Epoch #%d\t Validation_Accuracy: %.2f%%\n" %(epoch,acc))  
+    test_log.write('Epoch:%d   Validation_Accuracy:%.2f\n'%(epoch,acc))
+    test_log.flush()  
+
 def eval_train(model,all_loss):    
     model.eval()
     losses = torch.zeros(NB_TRAINING_DATA)    
@@ -272,6 +292,7 @@ for epoch in range(args.num_epochs+1):
     for param_group in optimizer2.param_groups:
         param_group['lr'] = lr          
     test_loader = loader.run('test')
+    valid_loader = loader.run('valid')
     eval_loader = loader.run('eval_train')   
     
     if epoch<warm_up:       
@@ -296,5 +317,6 @@ for epoch in range(args.num_epochs+1):
         labeled_trainloader, unlabeled_trainloader = loader.run('train',pred1,prob1) # co-divide
         train(epoch,net2,net1,optimizer2,labeled_trainloader, unlabeled_trainloader) # train net2         
 
-    test(epoch,net1,net2)  
+    valid(epoch, net1,net2)  
+test(args.num_epochs+1, net1,net2)  
 
