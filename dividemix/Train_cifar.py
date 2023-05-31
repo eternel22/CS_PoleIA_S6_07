@@ -37,8 +37,7 @@ random.seed(args.seed)
 torch.manual_seed(args.seed)
 torch.cuda.manual_seed_all(args.seed)
 if(args.limitData == 1):
-    dataloader.NB_TRAINING_DATA = dataloader.NB_TRAINING_DATA // 10
-    dataloader.NB_VALID_DATA = dataloader.NB_VALID_DATA // 10
+    dataloader.NB_TRAINING_DATA = dataloader.NB_TRAINING_DATA // 5
 
 # Training
 def train(epoch,net,net2,optimizer,labeled_trainloader,unlabeled_trainloader):
