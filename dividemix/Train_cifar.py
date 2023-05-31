@@ -135,6 +135,9 @@ def train(epoch,net,net2,optimizer,labeled_trainloader,unlabeled_trainloader):
                 %(args.dataset, args.r, args.noise_mode, epoch, args.num_epochs, batch_idx+1, num_iter, Lx.item(), Lu.item(), acc))
         sys.stdout.flush()
 
+        history["loss"].append(Lx.item())
+        history["accuracy"].append(acc)
+
 def warmup(epoch,net,optimizer,dataloader):
     net.train()
     num_iter = (len(dataloader.dataset)//dataloader.batch_size)+1
@@ -166,6 +169,9 @@ def warmup(epoch,net,optimizer,dataloader):
         sys.stdout.write('%s:%.1f-%s | Epoch [%3d/%3d] Iter[%3d/%3d]\t Train_Loss: %.4f Train_Accuracy: %.2f%%'
                 %(args.dataset, args.r, args.noise_mode, epoch, args.num_epochs, batch_idx+1, num_iter, loss.item(), acc))
         sys.stdout.flush()
+
+        history["loss"].append(loss.item())
+        history["accuracy"].append(acc)
 
 def test(epoch,net1,net2):
     net1.eval()
@@ -200,12 +206,16 @@ def valid(epoch,net1,net2):
             outputs = outputs1+outputs2
             _, predicted = torch.max(outputs, 1)            
                        
+            loss = CEloss(outputs, targets)   
             total += targets.size(0)
             correct += predicted.eq(targets).cpu().sum().item()                 
     acc = 100.*correct/total
     print("\n| Epoch #%d\t Validation_Accuracy: %.2f%%\n" %(epoch,acc))  
     test_log.write('Epoch:%d   Validation_Accuracy:%.2f\n'%(epoch,acc))
     test_log.flush()  
+
+    history["val_loss"].append(loss.item())
+    history["val_accuracy"].append(acc)
 
 def eval_train(model,all_loss):    
     model.eval()
@@ -282,6 +292,13 @@ if args.noise_mode=='asym':
 
 all_loss = [[],[]] # save the history of losses from two networks
 
+history = {
+    "loss": [],
+    "accuracy": [],
+    "val_loss": [],
+    "val_accuracy": [],
+}
+
 for epoch in range(args.num_epochs+1):   
     lr=args.lr
     if epoch >= 150:
@@ -317,5 +334,38 @@ for epoch in range(args.num_epochs+1):
         train(epoch,net2,net1,optimizer2,labeled_trainloader, unlabeled_trainloader) # train net2         
 
     valid(epoch, net1,net2)  
+
+# Calcul de la moyenne des loss et des accuracy entre les 2 modèles pour avoir une idée
+realLoss = []
+realAccuracy = []
+for i in range(0, len(history["loss"]), 2):
+    realLoss.append((history["loss"][i] + history["loss"][i+1])/2)
+    realAccuracy.append((history["accuracy"][i] + history["accuracy"][i+1])/2)
+history["accuracy"] = realAccuracy
+history["loss"] = realLoss
+
+
+
+def afficher():
+    import matplotlib.pyplot as plt
+    epoch_range = range(1, len(history['loss'])+1)
+
+    plt.figure(figsize=[14,4])
+    plt.subplot(1,2,1)
+    plt.plot(epoch_range, history['loss'], label='Training')
+    plt.plot(epoch_range, history['val_loss'], label='Validation')
+    plt.xlabel('Epoch'); plt.ylabel('Loss'); plt.title('Loss')
+    plt.legend()
+    plt.subplot(1,2,2)
+    plt.plot(epoch_range, history['accuracy'], label='Training')
+    plt.plot(epoch_range, history['val_accuracy'], label='Validation')
+    plt.xlabel('Epoch'); plt.ylabel('Accuracy'); plt.title('Accuracy')
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+afficher()
+
+
 test(args.num_epochs+1, net1,net2)  
 
