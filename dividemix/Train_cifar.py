@@ -135,8 +135,8 @@ def train(epoch,net,net2,optimizer,labeled_trainloader,unlabeled_trainloader):
                 %(args.dataset, args.r, args.noise_mode, epoch, args.num_epochs, batch_idx+1, num_iter, Lx.item(), Lu.item(), acc))
         sys.stdout.flush()
 
-        history["loss"].append(Lx.item())
-        history["accuracy"].append(acc)
+    history["loss"].append(Lx.item())
+    history["accuracy"].append(acc)
 
 def warmup(epoch,net,optimizer,dataloader):
     net.train()
@@ -170,8 +170,8 @@ def warmup(epoch,net,optimizer,dataloader):
                 %(args.dataset, args.r, args.noise_mode, epoch, args.num_epochs, batch_idx+1, num_iter, loss.item(), acc))
         sys.stdout.flush()
 
-        history["loss"].append(loss.item())
-        history["accuracy"].append(acc)
+    history["loss"].append(loss.item())
+    history["accuracy"].append(acc)
 
 def test(epoch,net1,net2):
     net1.eval()
@@ -363,6 +363,7 @@ def afficher():
     plt.legend()
     plt.tight_layout()
     plt.show()
+    plt.savefig("results.png")
 
 afficher()
 
