@@ -366,6 +366,7 @@ def afficher():
     plt.savefig("results.png")
 
 afficher()
+print(history)
 
 
 test(args.num_epochs+1, net1,net2)  
