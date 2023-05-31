@@ -49,8 +49,8 @@ class cifar_dataset(Dataset):
                 for n in range(1,5):
                     dpath = '%s/data_batch_%d'%(root_dir,n)
                     data_dic = unpickle(dpath)
-                    train_data.append(data_dic['data'][:NB_TRAINING_DATA/4])
-                    train_label = train_label+data_dic['labels'][:NB_TRAINING_DATA/4]
+                    train_data.append(data_dic['data'][:(NB_TRAINING_DATA//4)])
+                    train_label = train_label+data_dic['labels'][:(NB_TRAINING_DATA//4)]
                 train_data = np.concatenate(train_data)
             train_data = train_data.reshape((NB_TRAINING_DATA, 3, 32, 32))
             train_data = train_data.transpose((0, 2, 3, 1))
