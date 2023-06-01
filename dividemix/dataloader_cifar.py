@@ -167,9 +167,9 @@ class cifar_dataset(Dataset):
         train_images, train_labels, val_images, val_labels, test_images, test_labels = cifar10(nbTestsMax=nbTests, nbTrainsMax=nbTrains, propBruitage=r, normalise=False)
         _, train_labels_orig, _, _, _, _ = cifar10(nbTestsMax=nbTests, nbTrainsMax=nbTrains, propBruitage=0.0, normalise=False)
 
-        train_labels = list(train_labels)
-        val_labels = list(val_labels)
-        test_labels = list(test_labels)
+        train_labels = train_labels.tolist()
+        val_labels = val_labels.tolist()
+        test_labels = test_labels.tolist()
 
         if self.mode=='test':           
             self.test_data = test_images
