@@ -29,15 +29,14 @@ parser.add_argument('--gpuid', default=0, type=int)
 parser.add_argument('--num_class', default=10, type=int)
 parser.add_argument('--data_path', default='./cifar-10', type=str, help='path to dataset')
 parser.add_argument('--dataset', default='cifar10', type=str)
-parser.add_argument('--limitData', default=0, type=int)
+parser.add_argument('--nbTrains', default=50000, type=int)
+parser.add_argument('--nbTests', default=10000, type=int)
 args = parser.parse_args()
 
 torch.cuda.set_device(args.gpuid)
 random.seed(args.seed)
 torch.manual_seed(args.seed)
 torch.cuda.manual_seed_all(args.seed)
-if(args.limitData == 1):
-    dataloader.NB_TRAINING_DATA = dataloader.NB_TRAINING_DATA // 5
 
 # Training
 def train(epoch,net,net2,optimizer,labeled_trainloader,unlabeled_trainloader):
@@ -172,7 +171,7 @@ def warmup(epoch,net,optimizer,dataloader):
     history["loss"].append(loss.item())
     history["accuracy"].append(acc)
 
-def test(epoch,net1,net2):
+def test(net1,net2):
     net1.eval()
     net2.eval()
     correct = 0
@@ -188,8 +187,8 @@ def test(epoch,net1,net2):
             total += targets.size(0)
             correct += predicted.eq(targets).cpu().sum().item()                 
     acc = 100.*correct/total
-    print("\n| Test Epoch #%d\t Accuracy: %.2f%%\n" %(epoch,acc))  
-    test_log.write('Epoch:%d   Accuracy:%.2f\n'%(epoch,acc))
+    print(f"\n| Evaluation noise {args.r} \t Accuracy: %.2f%%\n" %(acc))  
+    test_log.write(f'Evaluation noise {args.r} :   Accuracy:%.2f\n'%(acc))
     test_log.flush()  
 
 def valid(epoch,net1,net2):
@@ -218,7 +217,7 @@ def valid(epoch,net1,net2):
 
 def eval_train(model,all_loss):    
     model.eval()
-    losses = torch.zeros(dataloader.NB_TRAINING_DATA)    
+    losses = torch.zeros(int(args.nbTrains * 0.8))    
     with torch.no_grad():
         for batch_idx, (inputs, targets, index) in enumerate(eval_loader):
             inputs, targets = inputs.cuda(), targets.cuda() 
@@ -273,7 +272,7 @@ if args.dataset=='cifar10':
     warm_up = 10
 
 loader = dataloader.cifar_dataloader(args.dataset,r=args.r,noise_mode=args.noise_mode,batch_size=args.batch_size,num_workers=2,\
-    root_dir=args.data_path,log=stats_log,noise_file='%s/%.1f_%s.json'%(args.data_path,args.r,args.noise_mode))
+    root_dir=args.data_path,log=stats_log,noise_file='%s/%.1f_%s.json'%(args.data_path,args.r,args.noise_mode), nbTrains=args.nbTrains, nbTests=args.nbTests)
 
 print('| Building net')
 net1 = create_model()
@@ -361,12 +360,12 @@ def afficher():
     plt.xlabel('Epoch'); plt.ylabel('Accuracy'); plt.title('Accuracy')
     plt.legend()
     plt.tight_layout()
+    plt.savefig(f"results_{args.r}.png")
     plt.show()
-    plt.savefig("results.png")
 
 afficher()
 print(history)
 
 
-test(args.num_epochs+1, net1,net2)  
+test(net1,net2)  
 

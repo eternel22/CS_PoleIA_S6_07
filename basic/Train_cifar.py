@@ -163,7 +163,7 @@ with torch.no_grad():
         total += labels.size(0)
         correct += (predicted == labels).sum().item()
 print("")
-print('| Evaluation : Test_Accuracy: %.2f%%'
+print(f'| Evaluation bruitage {args.bruitage}: Test_Accuracy: %.2f%%'
             %(correct / total))
 
 
