@@ -1,43 +1,22 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib
 import seaborn as sns
 sns.set()
 import os
-import random
-import shutil
-import time
-import warnings
-import numpy as np
-
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.backends.cudnn as cudnn
-import torchvision
-import torchvision.transforms as transforms 
 
 from tqdm import tqdm
 from PIL import Image
 import pickle
-from torch.utils.data import DataLoader
 
 import tarfile
-from torchvision.datasets.utils import download_url
-from torch.utils.data import random_split
 import torch.utils.data as Data
 from torchvision.datasets import ImageFolder
 from torchvision.transforms import ToTensor
 
-import sklearn
 from sklearn.model_selection import train_test_split
 from sklearn.utils import resample
 
-import matplotlib
-import matplotlib.pyplot as plt
-
 from urllib.request import urlretrieve
-import pickle
 
 def unpickle(file):
   with open(file, 'rb') as fo:
