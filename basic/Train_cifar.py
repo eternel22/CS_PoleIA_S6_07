@@ -44,8 +44,8 @@ parser = argparse.ArgumentParser(description='PyTorch CIFAR Training - Simple Ve
 parser.add_argument('--num_epochs', default=10, type=int)
 parser.add_argument('--bruitage', default=0.0, type=float, help='noise ratio')
 parser.add_argument('--seed', default=42)
-parser.add_argument('--nbTrains', default=50000)
-parser.add_argument('--nbTests', default=10000)
+parser.add_argument('--nbTrains', default=50000, type=int)
+parser.add_argument('--nbTests', default=10000, type=int)
 args = parser.parse_args()
 
 
