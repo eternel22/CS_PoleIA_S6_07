@@ -70,9 +70,10 @@ def cifar10(nbTrainsMax = 50000, nbTestsMax = 10000, propValid = 0.2, propBruita
   scores = np.load(os.path.join(path, file), allow_pickle=True) # Format : (50 000, 10)
 
   # Extraction
-  with tarfile.open(os.path.join(path, tar), 'r') as fichier_tar:
-      fichier_tar.extractall(path=path)
-      print("Extraction terminée !")
+  if tar not in os.listdir(path):
+    with tarfile.open(os.path.join(path, tar), 'r') as fichier_tar:
+        fichier_tar.extractall(path=path)
+        print("Extraction terminée !")
 
   path_batches = os.path.join(path, 'cifar-10-batches-py')
 
