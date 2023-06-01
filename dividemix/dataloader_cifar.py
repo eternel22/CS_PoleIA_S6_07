@@ -60,6 +60,10 @@ def cifar10(nbTrainsMax = 50000, nbTestsMax = 10000, propValid = 0.2, propBruita
     urlretrieve(''.join((url, tar)), os.path.join(path, tar))
     print("Downloaded %s to %s" % (tar, path))
 
+    with tarfile.open(os.path.join(path, tar), 'r') as fichier_tar:
+        fichier_tar.extractall(path=path)
+        print("Extraction terminée !")
+
   # Téléchargement des scores
   url = "https://github.com/eternel22/CS_PoleIA_S6_07/raw/master/"
   file = "scores_cifar10.npy"
@@ -68,12 +72,6 @@ def cifar10(nbTrainsMax = 50000, nbTestsMax = 10000, propValid = 0.2, propBruita
     print("Downloaded %s to %s" % (file, path))
   
   scores = np.load(os.path.join(path, file), allow_pickle=True) # Format : (50 000, 10)
-
-  # Extraction
-  if tar not in os.listdir(path):
-    with tarfile.open(os.path.join(path, tar), 'r') as fichier_tar:
-        fichier_tar.extractall(path=path)
-        print("Extraction terminée !")
 
   path_batches = os.path.join(path, 'cifar-10-batches-py')
 
