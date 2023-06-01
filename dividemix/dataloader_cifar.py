@@ -197,12 +197,12 @@ class cifar_dataset(Dataset):
                     self.probability = [probability[i] for i in pred_idx]   
                     
                     clean = (np.array(noise_label)==np.array(train_label))                                                       
-                    auc_meter = AUCMeter()
-                    auc_meter.reset()
-                    auc_meter.add(probability,clean)        
-                    auc,_,_ = auc_meter.value()               
-                    log.write('Numer of labeled samples:%d   AUC:%.3f\n'%(pred.sum(),auc))
-                    log.flush()      
+                    #auc_meter = AUCMeter()
+                    #auc_meter.reset()
+                    #auc_meter.add(probability,clean)        
+                    #auc,_,_ = auc_meter.value()               
+                    #log.write('Numer of labeled samples:%d   AUC:%.3f\n'%(pred.sum(),auc))
+                    #log.flush()      
                     
                 elif self.mode == "unlabeled":
                     pred_idx = (1-pred).nonzero()[0]                                               
