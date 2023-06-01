@@ -139,7 +139,7 @@ for epoch in range(num_epochs):
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
     print("")
-    print('| Epoch [%3d/%3d] \t Val_Loss: %.4f \t Val_Accuracy: %.2f%%'
+    print('| Epoch [%3d/%3d] \t \t Val_Loss: %.4f \t Val_Accuracy: %.2f%%'
                 %(epoch, num_epochs, loss.item(), correct / total))
     
     history["val_loss"].append(loss.item())
@@ -183,9 +183,9 @@ def show_results():
     plt.legend()
     plt.tight_layout()
 
-    plt.savefig('results.png')
+    plt.savefig(f'results_{args.bruitage}.png')
     plt.show()
 
 show_results()
 
-torch.save(model.state_dict(), "model")
+torch.save(model.state_dict(), f"model_{args.bruitage}")
