@@ -169,7 +169,6 @@ class cifar_dataset(Dataset):
         _, train_labels_orig, _, _, _, _ = cifar10(nbTestsMax=nbTests, nbTrainsMax=nbTrains, propBruitage=0.0, normalise=False)
 
         if self.mode=='test':           
-            test_dic = unpickle('%s/test_batch'%root_dir)
             self.test_data = test_images
             self.test_data = self.test_data.transpose((0, 2, 3, 1))  
             self.test_label = test_labels
