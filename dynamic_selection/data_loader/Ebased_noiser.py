@@ -304,8 +304,7 @@ def get_cifar10(root, cfg_trainer, train=True,
           train_dataset.asymmetric_noise()
           val_dataset.asymmetric_noise()
       else:
-          train_dataset.symmetric_noise()
-          val_dataset.symmetric_noise()
+          pass
           
       print ('##############')
       print (train_dataset.train_labels[:10])
