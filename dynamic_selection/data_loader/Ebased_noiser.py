@@ -1,558 +1,381 @@
-import sys
-
-import numpy as np
-from PIL import Image
-import torchvision
-from torch.utils.data.dataset import Subset
-from sklearn.metrics.pairwise import cosine_similarity, euclidean_distances 
-import torch
-import torch.nn.functional as F
-import random 
-import json
 import os
+os.chdir('../')
+# print (os.getcwd())
+
+from selection.svd_classifier import *
+from selection.gmm import *
+from selection.util import *
+import data_loader.data_loaders as module_data
+import data_loader.cifar10 as dataloadersource
+
+
 import copy
+import numpy as np
+import torch
+from tqdm import tqdm
+from typing import List
+from torchvision.utils import make_grid
+from base import BaseTrainer
+from utils.util import inf_loop
+import sys
+from sklearn.mixture import GaussianMixture
+import pdb
+import numpy as np
 
-def fix_seed(seed=888):
-    np.random.seed(seed)
-    random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    torch.backends.cudnn.deterministic = True
-    np.random.seed(seed)
-
-
-#######################################################
-#####################################################
-
-#######################################################
-#####################################################
-
-
-
-
-
-
-
-
-
-
-
-#######################################################
-#####################################################
-
-def get_cifar10(root, cfg_trainer, train=True,
-                transform_train=None, transform_val=None,
-                download=True, noise_file = '', teacher_idx=None, seed=888):
-  ########
-
-  import numpy as np
-  import matplotlib.pyplot as plt
-  import matplotlib
-  import seaborn as sns
-  sns.set()
-  import os
-  import random
-  import shutil
-  import time
-  import warnings
-  import numpy as np
-
-  import torch
-  import torch.nn as nn
-  import torch.nn.functional as F
-  import torch.backends.cudnn as cudnn
-  import torchvision
-  import torchvision.transforms as transforms 
-
-  from tqdm import tqdm
-  from PIL import Image
-  import pickle
-  from torch.utils.data import DataLoader
-
-  import tarfile
-  from torchvision.datasets.utils import download_url
-  from torch.utils.data import random_split
-  import torch.utils.data as Data
-  from torchvision.datasets import ImageFolder
-  from torchvision.transforms import ToTensor
-
-  import sklearn
-  from sklearn.model_selection import train_test_split
-  from sklearn.utils import resample
-
-  import matplotlib
-  import matplotlib.pyplot as plt
-
-  # from google.colab import drive
-  # drive.mount('/content/drive')
-
-  from urllib.request import urlretrieve
-
-  def unpickle(file):
-    import pickle
-    with open(file, 'rb') as fo:
-      dict = pickle.load(fo, encoding='latin1')
-    return dict
-
-  def cifar10(nbTrainsMax = 50000, nbTestsMax = 10000, propValid = 0.2, propBruitage = 0, path=None, seed=42, rawCifar=False, normalise=False):
+class DynamicTrainer(BaseTrainer):
     """
-    Cette fonction permet de charger Cifar10, en renvoyant : 
-      train_images, train_labels, val_images, val_labels, test_images, test_labels
-    
-    Paramètres :
-      nbTrainsMax : Nombre d'images d'entraînement (train + validation)
-      nbTestsMax : Nombre d'images de test
-      propValid : Proportion d'images de validation
-      propBruitage : Proportion de bruitage entre chats (3) et chiens (5)
-      path : path vers cifar10
-      seed : seed pour les mélanges
-      rawCifar : si on souhaite obtenir cifar sans aucun mélange ni troncature. Dans ce cas, propValid = 0, propBruitage = 0
-      normalise : s'il faut normaliser les données
+    DefaultTrainer class
+
+    Note:
+        Inherited from BaseTrainer.
     """
-
-    if path is None:
-      path = os.path.join('/content','data','cifar10')
-    os.makedirs(path, exist_ok=True)
-
-    # Téléchargement du tar
-    url = "https://www.cs.toronto.edu/~kriz/"
-    tar = "cifar-10-python.tar.gz"
-    if tar not in os.listdir(path):
-      urlretrieve(''.join((url, tar)), os.path.join(path, tar))
-      print("Downloaded %s to %s" % (tar, path))
-
-    # Téléchargement des scores
-    url = "https://github.com/eternel22/CS_PoleIA_S6_07/raw/master/"
-    file = "scores_cifar10.npy"
-    if file not in os.listdir(path):
-      urlretrieve(''.join((url, file)), os.path.join(path, file))
-      print("Downloaded %s to %s" % (file, path))
-    
-    scores = np.load(os.path.join(path, file), allow_pickle=True) # Format : (50 000, 10)
-
-    # Extraction
-    with tarfile.open(os.path.join(path, tar), 'r') as fichier_tar:
-        fichier_tar.extractall(path=path)
-        print("Extraction terminée !")
-
-    path_batches = os.path.join(path, 'cifar-10-batches-py')
-
-    # Création des données de test
-    test_dic = unpickle(os.path.join(path_batches, 'test_batch'))
-    test_images = test_dic['data']
-    test_labels = np.array(test_dic['labels'], dtype=np.uint8)
-    
-    if not rawCifar:
-      test_images, test_labels = resample(test_images, test_labels, n_samples=nbTestsMax, random_state=seed, stratify=test_labels)
-    
-
-    # Création des données d'entraînement + validation
-    train_images = []
-    train_labels = []
-
-    for iBatch in range(1, 6):
-      dic = unpickle(os.path.join(path_batches, f'data_batch_{iBatch}'))
-      images = dic['data']
-      labels = dic['labels']
-      train_images.append(images)
-      train_labels = train_labels + labels
-    
-    train_images = np.concatenate(train_images)
-    train_labels = np.array(train_labels, dtype=np.uint8)
-    val_images = np.array([])
-    val_labels = np.array([])
-
-    if not rawCifar:
-      train_images, train_labels, scores = resample(train_images, train_labels, scores, n_samples=nbTrainsMax, random_state=seed, stratify=train_labels)
-      train_images, val_images, train_labels, val_labels, train_scores, val_scores = train_test_split(train_images, train_labels, scores, test_size=propValid, stratify=train_labels, random_state=seed)
-
-      indices_scores_class_3 = np.where(train_labels  == 3)[0] # tableau 1D contenant les indices des éléments dans train_labels qui ont une valeur de 3.
-      indices_scores_class_5 = np.where(train_labels  == 5)[0] # tableau 1D contenant les indices des éléments dans train_labels qui ont une valeur de 5.
-
-      scores_3 = train_scores[indices_scores_class_3, 3] # scores de 3 pour les clean_targets égaux à 3
-      scores_5 = train_scores[indices_scores_class_5, 5] # scores de 5 pour les clean_targets égaux à 5
-
-      scores_3_sort = np.argsort(scores_3) # indices des scores 3 triés
-      scores_5_sort = np.argsort(scores_5) # indices des scores 5 triés
-
-      indices_scores_class_3_sorted = indices_scores_class_3[scores_3_sort]
-      indices_scores_class_5_sorted = indices_scores_class_5[scores_5_sort]
-
-      proportion_to_noisify_3 = int(propBruitage * len(indices_scores_class_3)) 
-      proportion_to_noisify_5 = int(propBruitage * len(indices_scores_class_5)) 
-
-      #print(proportion_to_noisify_3)
-      #print(proportion_to_noisify_5)
-
-      train_labels_noisy = np.copy(train_labels)
-
-      train_labels_noisy[indices_scores_class_3_sorted[:proportion_to_noisify_3]] = 5
-      train_labels_noisy[indices_scores_class_5_sorted[:proportion_to_noisify_5]] = 3
-      train_labels = train_labels_noisy
-
-
-    train_images = train_images.reshape((len(train_images), 3, 32, 32))  
-    val_images = val_images.reshape((len(val_images), 3, 32, 32))
-    test_images = test_images.reshape((len(test_images), 3, 32, 32)) 
-
-    if(normalise):
-      # Normaliser les données d'entrée
-      train_images = train_images / 255
-      val_images = val_images / 255
-      test_images = test_images / 255
-
-      mean = np.array([0.4914, 0.4822, 0.4465])
-      std = np.array([0.2471, 0.2435, 0.2616])
-
-      train_images = np.transpose(train_images, (0, 2, 3, 1))  # (800, 32, 32, 3)
-      train_images = (train_images - mean) / std
-      train_images = np.transpose(train_images, (0, 3, 1, 2))  # (800, 3, 32, 32)
-
-      val_images = np.transpose(val_images, (0, 2, 3, 1))  # (800, 32, 32, 3)
-      val_images = (val_images - mean) / std
-      val_images = np.transpose(val_images, (0, 3, 1, 2))  # (800, 3, 32, 32)
-
-      test_images = np.transpose(test_images, (0, 2, 3, 1))  # (800, 32, 32, 3)
-      test_images = (test_images - mean) / std
-      test_images = np.transpose(test_images, (0, 3, 1, 2))  # (800, 3, 32, 32)
-
-    return train_images, train_labels, val_images, val_labels, test_images, test_labels
-
-  train_images, train_labels, val_images, val_labels, test_images, test_labels = cifar10(nbTrainsMax=100, propBruitage=0.5, normalise=True)
-
-
-  train_images, train_labels, val_images, val_labels, test_images, test_labels = cifar10(nbTrainsMax=1000)
-
-
-  # Supposons que vous avez un array d'étiquettes 'labels'
-
-  # Calculer les fréquences de chaque label
-  frequences = np.bincount(train_labels)
-
-  # Obtenir les labels uniques
-  labels_uniques = np.unique(train_labels)
-
-  # Créer un graphique à barres pour représenter l'histogramme de fréquence
-  plt.bar(labels_uniques, frequences)
-
-  # Étiqueter les axes
-  plt.xlabel('Label')
-  plt.ylabel('Fréquence')
-
-  # Afficher le graphique
-  plt.show()
-
-
-
-  import torch
-  import torchvision
-  import torch.optim as optim
-  import torch.nn as nn
-  from torch.utils.data import DataLoader, TensorDataset
-  import sys
-
-  train_images, train_labels, val_images, val_labels, test_images, test_labels = cifar10(nbTrainsMax=10000,normalise=True)
-  print(type( cifar10(nbTrainsMax=10000,normalise=True)))
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    #########
-  base_dataset = torchvision.datasets.CIFAR10(root, train=train, download=download)
-  if train:
-      fix_seed(seed)
-      train_idxs, val_idxs = train_labels, val_labels
-
-      train_dataset = TensorDataset(torch.tensor(train_images), torch.tensor(train_labels))
-      val_dataset = TensorDataset(torch.tensor(val_images), torch.tensor(val_labels))
-
-      cfg_trainer['instance'] = 0
-      if cfg_trainer['instance']:
-          train_dataset.instance_noise()
-          val_dataset.instance_noise()
-      elif cfg_trainer['asym']:
-          train_dataset.asymmetric_noise()
-          val_dataset.asymmetric_noise()
-      else:
-          pass
-          
-      print ('##############')
-      print (train_dataset.train_labels[:10])
-      print (train_dataset.train_labels_gt[:10])
+    def __init__(self, model, train_criterion, metrics, optimizer, config, data_loader, parse,
+                 valid_data_loader=None, test_data_loader=None, teacher = None, lr_scheduler=None, len_epoch=None, val_criterion=None, mode=None, entropy=False, threshold = 0.1):
+        super().__init__(model, train_criterion, metrics, optimizer, config, val_criterion, parse)
+        self.config = config
+        self.data_loader = data_loader
+        self.mode = mode
+        self.parse = parse
+        
+        if len_epoch is None:
+            # epoch-based training
+            self.len_epoch = len(self.data_loader)
+        else:
+            # iteration-based training
+            self.data_loader = inf_loop(data_loader)
+            self.len_epoch = len_epoch
+        self.dynamic_train_data_loader = copy.deepcopy(data_loader)
+        self.valid_data_loader = valid_data_loader
+        
+        self.warm_up = parse.warmup
+        self.every = parse.every
+        
+        self.orig_data_loader = getattr(module_data, self.config['data_loader']['type'])(
+            self.config['data_loader']['args']['data_dir'],
+            batch_size=self.config['data_loader']['args']['batch_size'],
+            shuffle=False,
+            validation_split=0.1,
+            num_batches=self.config['data_loader']['args']['num_batches'],
+            training=True,
+            num_workers=self.config['data_loader']['args']['num_workers'],
+            pin_memory=self.config['data_loader']['args']['pin_memory'])
+        
+        if teacher != None:
+            self.teacher = teacher.to(self.device)
+        else:
+            self.teacher = teacher
+        
+        self.test_data_loader = test_data_loader
+        self.do_validation = self.valid_data_loader is not None
+        self.do_test = self.test_data_loader is not None
+        self.lr_scheduler = lr_scheduler
+        self.log_step = int(np.sqrt(data_loader.batch_size))
+        
+
+        self.train_loss_list: List[float] = []
+        self.val_loss_list: List[float] = []
+        self.test_loss_list: List[float] = []
+        self.purity = (dataloadersource.train_labels == \
+                       data_loader.train_labels_gt).sum() / len(data_loader.train_dataset)
+        self.teacher_idx = None
+        #Visdom visualization
+        
+        self.entropy = entropy
+        if self.entropy: self.entro_loss = Entropy(threshold)
             
-      if teacher_idx is not None:
-          print(len(teacher_idx))
-          train_dataset.truncate(teacher_idx)
-          
-      print(f"Train: {len(train_dataset)} Val: {len(val_dataset)}")  # Train: 45000 Val: 5000
-  else:
-      fix_seed(seed)
-      train_dataset = []
-      val_dataset = CIFAR10_val(root, cfg_trainer, None, train=train, transform=transform_val)
-      print(f"Test: {len(val_dataset)}")
-  
-  if len(val_dataset) == 0:
-      return train_dataset, None
-  else:
-      return train_dataset, val_dataset
+            
+    def update_dataloader(self, epoch):
+        
+        with torch.no_grad():
+            current_features, current_labels = get_features(self.model, self.orig_data_loader)
+            datanum = len(current_labels)
+            if self.teacher_idx is not None:
+                prev_features, prev_labels = current_features[self.teacher_idx], current_labels[self.teacher_idx]
+            else:
+                prev_features, prev_labels = current_features, current_labels
+                
 
-def train_val_split(base_dataset: torchvision.datasets.CIFAR10, seed):
-  fix_seed(seed)
-  num_classes = 10
-  base_dataset = np.array(base_dataset)
-  train_n = int(len(base_dataset) * 0.9 / num_classes)
-  train_idxs = []
-  val_idxs = []
+#             if epoch > 10:
+            self.teacher_idx = fine(current_features, current_labels, fit=self.parse.distill_mode, prev_features=prev_features, prev_labels=prev_labels, p_threshold=self.parse.zeta)
+#             else:
+#                 self.teacher_idx = np.arange(datanum)
+#                 same_topk_index(orig_label, orig_out, prev_label, prev_out, np.clip((epoch-1) * 0.01, 0., 0.72))
+            
+            
+        curr_data_loader = getattr(module_data, self.config['data_loader']['type'])(
+            self.config['data_loader']['args']['data_dir'],
+            batch_size=self.config['data_loader']['args']['batch_size'],
+            shuffle=self.config['data_loader']['args']['shuffle'],
+            validation_split=0.1,
+            num_batches=self.config['data_loader']['args']['num_batches'],
+            training=True,
+            num_workers=self.config['data_loader']['args']['num_workers'],
+            pin_memory=self.config['data_loader']['args']['pin_memory'],
+            teacher_idx=self.teacher_idx)
+        
+        self.selected, self.precision, self.recall, self.f1, self.specificity, self.accuracy = return_statistics(self.orig_data_loader, self.teacher_idx)
+        
+        return curr_data_loader
+        
 
-  for i in range(num_classes):
-      idxs = np.where(base_dataset == i)[0]
-      np.random.shuffle(idxs)
-      train_idxs.extend(idxs[:train_n])
-      val_idxs.extend(idxs[train_n:])
-  np.random.shuffle(train_idxs)
-  np.random.shuffle(val_idxs)
+    def _eval_metrics(self, output, label):
+        acc_metrics = np.zeros(len(self.metrics))
+        for i, metric in enumerate(self.metrics):
+            acc_metrics[i] += metric(output, label)
+            self.writer.add_scalar('{}'.format(metric.__name__), acc_metrics[i])
+        return acc_metrics
 
-  return train_idxs, val_idxs
+    def _train_epoch(self, epoch):
+        """
 
-class CIFAR10_train(torchvision.datasets.CIFAR10):
-  def __init__(self, root, cfg_trainer, indexs, train=True,
-                transform=None, target_transform=None,
-                download=False, seed=888):
-      super(CIFAR10_train, self).__init__(root, train=train,
-                                          transform=transform, target_transform=target_transform,
-                                          download=download)
-      fix_seed(seed)
-      self.num_classes = 10
-      self.cfg_trainer = cfg_trainer
-      self.train_data = self.data[indexs] # self.train_data[indexs]
-      self.train_labels = np.array(self.targets)[indexs] # np.array(self.train_labels)[indexs]
-      self.indexs = indexs
-      self.prediction = np.zeros((len(self.train_data), self.num_classes, self.num_classes), dtype=np.float32)
-      self.noise_indx = []
-      self.seed = seed
-              
-  def symmetric_noise(self):
-      self.train_labels_gt = self.train_labels.copy()
-      fix_seed(self.seed)
-      indices = np.random.permutation(len(self.train_data))
-      for i, idx in enumerate(indices):
-          if i < self.cfg_trainer['percent'] * len(self.train_data):
-              self.noise_indx.append(idx)
-              self.train_labels[idx] = np.random.randint(self.num_classes, dtype=np.int32)
+        :param epoch: Current training epoch.
+        :return: A log that contains all information you want to save.
 
-  def asymmetric_noise(self):
-      self.train_labels_gt = copy.deepcopy(self.train_labels)
-      fix_seed(self.seed)
+        Note:
+            If you have additional information to record, for example:
+                > additional_log = {"x": x, "y": y}
+            merge it with log before return. i.e.
+                > log = {**log, **additional_log}
+                > return log
 
-      for i in range(self.num_classes):
-          indices = np.where(self.train_labels == i)[0]
-          np.random.shuffle(indices)
-          for j, idx in enumerate(indices):
-              if j < self.cfg_trainer['percent'] * len(indices):
-                  self.noise_indx.append(idx)
-                  # truck -> automobile
-                  if i == 9:
-                      self.train_labels[idx] = 1
-                  # bird -> airplane
-                  elif i == 2:
-                      self.train_labels[idx] = 0
-                  # cat -> dog
-                  elif i == 3:
-                      self.train_labels[idx] = 5
-                  # dog -> cat
-                  elif i == 5:
-                      self.train_labels[idx] = 3
-                  # deer -> horse
-                  elif i == 4:
-                      self.train_labels[idx] = 7
-                      
-  def instance_noise(self):
-      '''
-      Instance-dependent noise
-      https://github.com/haochenglouis/cores/blob/main/data/utils.py
-      '''
-      
-      self.train_labels_gt = copy.deepcopy(self.train_labels)
-      fix_seed(self.seed)
-      
-      q_ = np.random.normal(loc=self.cfg_trainer['percent'], scale=0.1, size=int(1e6))
-      q = []
-      for pro in q_:
-          if 0 < pro < 1:
-              q.append(pro)
-          if len(q)==50000:
-              break
-              
-      w = np.random.normal(loc=0, scale=1, size=(32*32*3, 10))
-      for i, sample in enumerate(self.train_data):
-          sample = sample.flatten()
-          p_all = np.matmul(sample, w)
-          p_all[self.train_labels_gt[i]] = -int(1e6)
-          p_all = q[i] * F.softmax(torch.tensor(p_all), dim=0).numpy()
-          p_all[self.train_labels_gt[i]] = 1 - q[i]
-          self.train_labels[i] = np.random.choice(np.arange(10), p=p_all/sum(p_all))
-      
-  def truncate(self, teacher_idx):
-      self.train_data = self.train_data[teacher_idx]
-      self.train_labels = self.train_labels[teacher_idx]
-      self.train_labels_gt = self.train_labels_gt[teacher_idx]       
-      
-  def __getitem__(self, index):
-      """
-      Args:
-          index (int): Index
+            The metrics in log must have the key 'metrics'.
+        """
+        if epoch % self.every == 1 and epoch > self.warm_up: # 
+            self.dynamic_train_data_loader = self.update_dataloader(epoch)
+            self.len_epoch = len(self.dynamic_train_data_loader)
+            self.purity = (self.dynamic_train_data_loader.train_dataset.train_labels == \
+                           self.dynamic_train_data_loader.train_dataset.train_labels_gt).sum() / \
+                        len(self.dynamic_train_data_loader.train_dataset)
+            
+#         if epoch > 30:
+#             self.train_criterion = CCELoss()
+        
+        self.model.train()
 
-      Returns:
-          tuple: (image, target) where target is index of the target class.
-      """
-      img, target, target_gt = self.train_data[index], self.train_labels[index], self.train_labels_gt[index]
+        total_loss = 0
+        total_metrics = np.zeros(len(self.metrics))
+        total_metrics_gt = np.zeros(len(self.metrics))
 
+        with tqdm(self.dynamic_train_data_loader) as progress:
+            for batch_idx, (data, label, indexs, gt) in enumerate(progress):
+                progress.set_description_str(f'Train epoch {epoch}')
+                
+                data, label = data.to(self.device), label.long().to(self.device)
+                if self.teacher:
+                    tea_represent, tea_logit = self.teacher(data)
+                    tea_represent, tea_logit = tea_represent.to(self.device), tea_logit.to(self.device)
+#                     represent_out = self.represent(data).to(self.device)
+                    
+                
+                gt = gt.long().to(self.device)
+                
+                model_represent, output = self.model(data)
+                if self.config['train_loss']['type'] == 'CLoss' or self.config['train_loss']['type'] == 'NPCLoss':
+                    loss = self.train_criterion(output, label, epoch, indexs.cpu().detach().numpy().tolist())
+                else:
+                    if self.teacher:
+                        loss = self.train_criterion(output, label, indexs, mode=self.mode)
+                    else:
+                        sing_lbl = None
+                        loss = self.train_criterion(output, label, indexs.cpu().detach().numpy().tolist())
+#                 pdb.set_trace()
+                self.optimizer.zero_grad()
+                if self.entropy:
+                    loss -= self.entro_loss(output, label, sing_lbl)
+                loss.backward()
 
-      # doing this so that it is consistent with all other datasets
-      # to return a PIL Image
-      img = Image.fromarray(img)
+                self.optimizer.step()
+
+                self.writer.set_step((epoch - 1) * self.len_epoch + batch_idx)
+                self.writer.add_scalar('loss', loss.item())
+                self.train_loss_list.append(loss.item())
+                total_loss += loss.item()
+                total_metrics += self._eval_metrics(output, label)
+                total_metrics_gt += self._eval_metrics(output, gt)
+
+                if batch_idx % self.log_step == 0:
+                    progress.set_postfix_str(' {} Loss: {:.6f}'.format(
+                        self._progress(batch_idx),
+                        loss.item()))
+                    self.writer.add_image('input', make_grid(data.cpu(), nrow=8, normalize=True))
+                
+                if batch_idx == self.len_epoch:
+                    break
+        # if hasattr(self.data_loader, 'run'):
+        #     self.data_loader.run()
+
+        log = {
+            'loss': total_loss / self.len_epoch,
+            'metrics': (total_metrics / self.len_epoch).tolist(),
+            'metrics_gt': (total_metrics_gt / self.len_epoch).tolist(),
+            'learning rate': self.lr_scheduler.get_last_lr(),
+            'purity:': '{} = {}/{}'.format(self.purity, (self.dynamic_train_data_loader.train_dataset.train_labels == \
+                   self.dynamic_train_data_loader.train_dataset.train_labels_gt).sum(), len(self.dynamic_train_data_loader.train_dataset))
+        }
 
 
-      if self.transform is not None:
-          img = self.transform(img)
-
-      if self.target_transform is not None:
-          target = self.target_transform(target)
-
-      return img, target, index, target_gt
-
-  def __len__(self):
-      return len(self.train_data)
-
-class CIFAR10_val(torchvision.datasets.CIFAR10):
-
-  def __init__(self, root, cfg_trainer, indexs, train=True,
-                transform=None, target_transform=None,
-                download=False):
-      super(CIFAR10_val, self).__init__(root, train=train,
-                                        transform=transform, target_transform=target_transform,
-                                        download=download)
-
-      # self.train_data = self.data[indexs]
-      # self.train_labels = np.array(self.targets)[indexs]
-      self.num_classes = 10
-      self.cfg_trainer = cfg_trainer
-      if train:
-          self.train_data = self.data[indexs]
-          self.train_labels = np.array(self.targets)[indexs]
-      else:
-          self.train_data = self.data
-          self.train_labels = np.array(self.targets)
-      self.train_labels_gt = self.train_labels.copy()
-      
-  def symmetric_noise(self):
-      
-      indices = np.random.permutation(len(self.train_data))
-      for i, idx in enumerate(indices):
-          if i < self.cfg_trainer['percent'] * len(self.train_data):
-              self.train_labels[idx] = np.random.randint(self.num_classes, dtype=np.int32)
-
-  def asymmetric_noise(self):
-      for i in range(self.num_classes):
-          indices = np.where(self.train_labels == i)[0]
-          np.random.shuffle(indices)
-          for j, idx in enumerate(indices):
-              if j < self.cfg_trainer['percent'] * len(indices):
-                  # truck -> automobile
-                  if i == 9:
-                      self.train_labels[idx] = 1
-                  # bird -> airplane
-                  elif i == 2:
-                      self.train_labels[idx] = 0
-                  # cat -> dog
-                  elif i == 3:
-                      self.train_labels[idx] = 5
-                  # dog -> cat
-                  elif i == 5:
-                      self.train_labels[idx] = 3
-                  # deer -> horse
-                  elif i == 4:
-                      self.train_labels[idx] = 7
-                      
-                      
-  def instance_noise(self):
-      '''
-      Instance-dependent noise
-      https://github.com/haochenglouis/cores/blob/main/data/utils.py
-      '''
-      q_ = np.random.normal(loc=self.cfg_trainer['percent'], scale=0.1, size=int(1e6))
-      q = []
-      for pro in q_:
-          if 0 < pro < 1:
-              q.append(pro)
-          if len(q)==50000:
-              break
-              
-      w = np.random.normal(loc=0, scale=1, size=(32*32*3, 10))
-      for i, sample in enumerate(self.train_data):
-          sample = sample.flatten()
-          p_all = np.matmul(sample, w)
-          p_all[self.train_labels_gt[i]] = -int(1e6)
-          p_all = q[i] * F.softmax(torch.tensor(p_all), dim=0).numpy()
-          p_all[self.train_labels_gt[i]] = 1 - q[i]
-          self.train_labels[i] = np.random.choice(np.arange(10), p=p_all/sum(p_all))
-                      
-                      
-  def __len__(self):
-      return len(self.train_data)
+        if self.do_validation:
+            val_log = self._valid_epoch(epoch)
+            log.update(val_log)
+        if self.do_test:
+            test_log, test_meta = self._test_epoch(epoch)
+            log.update(test_log)
+        else: 
+            test_meta = [0,0]
 
 
-  def __getitem__(self, index):
-      """
-      Args:
-          index (int): Index
-
-      Returns:
-          tuple: (image, target) where target is index of the target class.
-      """
-      img, target, target_gt = self.train_data[index], self.train_labels[index], self.train_labels_gt[index]
+        if self.lr_scheduler is not None:
+            self.lr_scheduler.step()
+            
+        return log
 
 
-      # doing this so that it is consistent with all other datasets
-      # to return a PIL Image
-      img = Image.fromarray(img)
+    def _valid_epoch(self, epoch):
+        """
+        Validate after training an epoch
+
+        :return: A log that contains information about validation
+
+        Note:
+            The validation metrics in log must have the key 'val_metrics'.
+        """
+        self.model.eval()
+
+        total_val_loss = 0
+        total_val_metrics = np.zeros(len(self.metrics))
+        with torch.no_grad():
+            with tqdm(self.valid_data_loader) as progress:
+                for batch_idx, (data, label, _, _) in enumerate(progress):
+                    progress.set_description_str(f'Valid epoch {epoch}')
+                    data, label = data.to(self.device), label.long().to(self.device)
+                    _, output = self.model(data)
+                    loss = self.val_criterion()(output, label)
+
+                    self.writer.set_step((epoch - 1) * len(self.valid_data_loader) + batch_idx, 'valid')
+                    self.writer.add_scalar('loss', loss.item())
+                    self.val_loss_list.append(loss.item())
+                    total_val_loss += loss.item()
+                    total_val_metrics += self._eval_metrics(output, label)
+                    self.writer.add_image('input', make_grid(data.cpu(), nrow=8, normalize=True))
+
+        # add histogram of model parameters to the tensorboard
+        for name, p in self.model.named_parameters():
+            self.writer.add_histogram(name, p, bins='auto')
+
+        return {
+            'val_loss': total_val_loss / len(self.valid_data_loader),
+            'val_metrics': (total_val_metrics / len(self.valid_data_loader)).tolist()
+        }
+
+    def _test_epoch(self, epoch):
+        """
+        Test after training an epoch
+
+        :return: A log that contains information about test
+
+        Note:
+            The Test metrics in log must have the key 'val_metrics'.
+        """
+        self.model.eval()
+        total_test_loss = 0
+        total_test_metrics = np.zeros(len(self.metrics))
+        results = np.zeros((len(self.test_data_loader.dataset), self.config['num_classes']), dtype=np.float32)
+        tar_ = np.zeros((len(self.test_data_loader.dataset),), dtype=np.float32)
+        with torch.no_grad():
+            with tqdm(self.test_data_loader) as progress:
+                for batch_idx, (data, label,indexs,_) in enumerate(progress):
+                    progress.set_description_str(f'Test epoch {epoch}')
+                    data, label = data.to(self.device), label.long().to(self.device)
+                    _, output = self.model(data)
+                    loss = self.val_criterion()(output, label)
+
+                    self.writer.set_step((epoch - 1) * len(self.test_data_loader) + batch_idx, 'test')
+                    self.writer.add_scalar('loss', loss.item())
+                    self.test_loss_list.append(loss.item())
+                    total_test_loss += loss.item()
+                    total_test_metrics += self._eval_metrics(output, label)
+                    self.writer.add_image('input', make_grid(data.cpu(), nrow=8, normalize=True))
+
+                    results[indexs.cpu().detach().numpy().tolist()] = output.cpu().detach().numpy().tolist()
+                    tar_[indexs.cpu().detach().numpy().tolist()] = label.cpu().detach().numpy().tolist()
+
+        # add histogram of model parameters to the tensorboard
+        for name, p in self.model.named_parameters():
+            self.writer.add_histogram(name, p, bins='auto')
+
+        return {
+            'test_loss': total_test_loss / len(self.test_data_loader),
+            'test_metrics': (total_test_metrics / len(self.test_data_loader)).tolist()
+        },[results,tar_]
 
 
-      if self.transform is not None:
-          img = self.transform(img)
+    def _warmup_epoch(self, epoch):
+        total_loss = 0
+        total_metrics = np.zeros(len(self.metrics))
+        self.model.train()
 
-      if self.target_transform is not None:
-          target = self.target_transform(target)
+        data_loader = self.data_loader#self.loader.run('warmup')
 
-      return img, target, index, target_gt
-      
+
+        with tqdm(data_loader) as progress:
+            for batch_idx, (data, label, _, indexs , _) in enumerate(progress):
+                progress.set_description_str(f'Warm up epoch {epoch}')
+
+                data, label = data.to(self.device), label.long().to(self.device)
+
+                self.optimizer.zero_grad()
+                _, output = self.model(data)
+                out_prob = torch.nn.functional.softmax(output).data.detach()
+
+                self.train_criterion.update_hist(indexs.cpu().detach().numpy().tolist(), out_prob)
+
+                loss = torch.nn.functional.cross_entropy(output, label)
+
+                loss.backward() 
+                self.optimizer.step()
+
+                self.writer.set_step((epoch - 1) * self.len_epoch + batch_idx)
+                self.writer.add_scalar('loss', loss.item())
+                self.train_loss_list.append(loss.item())
+                total_loss += loss.item()
+                total_metrics += self._eval_metrics(output, label)
+
+
+                if batch_idx % self.log_step == 0:
+                    progress.set_postfix_str(' {} Loss: {:.6f}'.format(
+                        self._progress(batch_idx),
+                        loss.item()))
+                    self.writer.add_image('input', make_grid(data.cpu(), nrow=8, normalize=True))
+
+                if batch_idx == self.len_epoch:
+                    break
+        if hasattr(self.data_loader, 'run'): 
+            self.data_loader.run()
+        log = {
+            'loss': total_loss / self.len_epoch,
+            'noise detection rate' : 0.0,
+            'metrics': (total_metrics / self.len_epoch).tolist(),
+            'learning rate': self.lr_scheduler.get_last_lr()
+        }
+
+        if self.do_validation:
+            val_log = self._valid_epoch(epoch)
+            log.update(val_log)
+        if self.do_test:
+            test_log, test_meta = self._test_epoch(epoch)
+            log.update(test_log)
+        else: 
+            test_meta = [0,0]
+
+        return log
+
+
+    def _progress(self, batch_idx):
+        base = '[{}/{} ({:.0f}%)]'
+        if hasattr(self.data_loader, 'n_samples'):
+            current = batch_idx * self.data_loader.batch_size
+            total = self.data_loader.n_samples
+        else:
+            current = batch_idx
+            total = self.len_epoch
+        return base.format(current, total, 100.0 * current / total)
