@@ -11,7 +11,7 @@ import random
 import json
 import os
 import copy
-
+ 
 def fix_seed(seed=888):
     np.random.seed(seed)
     random.seed(seed)
@@ -98,14 +98,27 @@ class CIFAR10_train(torchvision.datasets.CIFAR10):
         self.seed = seed
                 
     def symmetric_noise(self):
-        self.train_labels_gt = self.train_labels.copy()
-        fix_seed(self.seed)
+        ratio_dict = {i: 0 for i in range(10)}
+        counter3 = 0
+        counter5 =0
         indices = np.random.permutation(len(self.train_data))
+        limit = self.cfg_trainer['percent'] * len(self.train_data) *0.1
         for i, idx in enumerate(indices):
-            if i < self.cfg_trainer['percent'] * len(self.train_data):
-                self.noise_indx.append(idx)
-                self.train_labels[idx] = np.random.randint(self.num_classes, dtype=np.int32)
+            if (self.train_labels[idx] ==3 and counter3 < limit) :
+              self.train_labels[idx] = 5
+              counter3 +=1
+              
+            elif (self.train_labels[idx] ==5 and counter5 < limit):
+              self.train_labels[idx] = 3
+              counter5 +=1  
+                 
+            ratio_dict[self.train_labels[idx]] =  ratio_dict[self.train_labels[idx]] +1
+        total_sum = sum(ratio_dict.values())
 
+        for key in range(10):
+          ratio_dict[key] = (ratio_dict[key] / total_sum) * 100 
+        print("THE RATIO DICT IS NOW COMPUTED, IT IS WORTH", ratio_dict)   
+        
     def asymmetric_noise(self):
         self.train_labels_gt = copy.deepcopy(self.train_labels)
         fix_seed(self.seed)
