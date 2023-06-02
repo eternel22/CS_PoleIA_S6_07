@@ -37,7 +37,7 @@ from urllib.request import urlretrieve
 
 from dataloader_cifar import cifar10
 
-from torchvision.models import resnet34, ResNet34_Weights
+from torchvision.models import resnet18 #34, ResNet34_Weights
 
 
 parser = argparse.ArgumentParser(description='PyTorch CIFAR Training - Simple Version')
@@ -50,7 +50,7 @@ args = parser.parse_args()
 
 
 def get_net():
-    resnet = resnet34(weights=ResNet34_Weights.IMAGENET1K_V1) # le parametre preentraine est mis à True
+    resnet = resnet18()#(weights=ResNet34_Weights.IMAGENET1K_V1) # le parametre preentraine est mis à True
     
     # Substitute the FC output layer
     resnet.fc = torch.nn.Linear(resnet.fc.in_features, 10) # on change que la dernière couche par rapport au nombre de classes...
