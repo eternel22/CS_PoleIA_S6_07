@@ -199,7 +199,8 @@ class CIFAR10_train(torchvision.datasets.CIFAR10):
         elif self.train_labels[idx] == 5 and compteur_chien<compteur_max:
             compteur_chien += 1
             self.train_labels[idx] = 3
-      print("symetric_noise has concluded without ERROR")
+      
+      print("symetric_noise has concluded without ERROR", compteur_chat, compteur_chien)
 
 
     def asymmetric_noise(self):
