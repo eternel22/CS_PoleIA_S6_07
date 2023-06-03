@@ -11,6 +11,13 @@ import random
 import json
 import os
 import copy
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import torchvision.transforms as transforms
+import torchvision.datasets as datasets
+import torchvision.models as models
+from sklearn.utils import resample
 
 def fix_seed(seed=888):
     np.random.seed(seed)
@@ -70,6 +77,7 @@ def train_val_split(base_dataset: torchvision.datasets.CIFAR10, seed):
     train_idxs = []
     val_idxs = []
 
+
     for i in range(num_classes):
         idxs = np.where(base_dataset == i)[0]
         np.random.shuffle(idxs)
@@ -92,19 +100,127 @@ class CIFAR10_train(torchvision.datasets.CIFAR10):
         self.cfg_trainer = cfg_trainer
         self.train_data = self.data[indexs] # self.train_data[indexs]
         self.train_labels = np.array(self.targets)[indexs] # np.array(self.train_labels)[indexs]
+        self.train_data, self.train_labels= resample(self.train_data, self.train_labels, n_samples = 10000, random_state=888,stratify = self.train_labels)
+        #la nécessité d'effectuer un grand nombre d'entrainement avec des ressources limités nous fait resample le dataset pour 
+        #réduire le nombre de points et accélérer les calculs. Un entrainement idéal se ferait sans cette opération
         self.indexs = indexs
         self.prediction = np.zeros((len(self.train_data), self.num_classes, self.num_classes), dtype=np.float32)
         self.noise_indx = []
         self.seed = seed
-                
+        self.prediction_model = None
+###############################################
+
+
+
+
+
+
+
+
+    #les trois fonctions suivantes servent à construire un modèle standard de resnet-18, pré-entrainé sur image-net
+    #et fine-tuné sur CIfar-10, pour faire les prédictions voulues par le client
+    def fine_tune_resnet(self, trainloader, num_epochs=1):
+        criterion = nn.CrossEntropyLoss()
+        optimizer = optim.SGD(self.prediction_model.parameters(), lr=0.001, momentum=0.9)
+
+        self.prediction_model.train()
+        for epoch in range(num_epochs):
+            running_loss = 0.0
+            for inputs, labels in trainloader:
+                optimizer.zero_grad()
+                outputs = self.prediction_model(inputs)
+                loss = criterion(outputs, labels)
+                loss.backward()
+                optimizer.step()
+                running_loss += loss.item()
+
+            print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {running_loss / len(trainloader):.4f}")
+
+    def train_model(self):
+        
+        transform = transforms.Compose([
+            transforms.RandomCrop(32, padding=4),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        ])
+
+        trainset = datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
+        trainloader = torch.utils.data.DataLoader(trainset, batch_size=32, shuffle=True, num_workers=2)
+
+        
+        self.prediction_model = models.resnet18(pretrained=True)
+        num_ftrs = self.prediction_model.fc.in_features
+        self.prediction_model.fc = nn.Linear(num_ftrs, self.num_classes)  
+
+       
+        self.fine_tune_resnet(trainloader, num_epochs=1)
+
+
+    import torch
+    from torchvision import transforms
+
+    def predict_class(self, datapoint):
+        if self.prediction_model is None:
+            raise RuntimeError("Model has not been trained yet. Call the 'train_model' method first.")
+
+        self.prediction_model.eval()
+        #l'étape suivante est nécessaire pour reformater l'image afin d'avoir des prédictions cohérentes
+        transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        ])
+
+        with torch.no_grad():
+            input = transform(datapoint)
+            output = self.prediction_model(input.unsqueeze(0))
+            _, predicted = torch.max(output.data, 1)
+            confidence = torch.softmax(output, dim=1)[0, predicted] * 100
+
+        print("prediction", predicted.item(), confidence.item())
+
+        return predicted.item(), confidence.item()
+
+
     def symmetric_noise(self):
-        self.train_labels_gt = self.train_labels.copy()
-        fix_seed(self.seed)
-        indices = np.random.permutation(len(self.train_data))
-        for i, idx in enumerate(indices):
-            if i < self.cfg_trainer['percent'] * len(self.train_data):
-                self.noise_indx.append(idx)
-                self.train_labels[idx] = np.random.randint(self.num_classes, dtype=np.int32)
+
+      self.train_labels_gt = self.train_labels.copy()
+      if self.prediction_model is None:
+
+          
+        self.train_model()
+      fix_seed(self.seed)
+      indices = np.random.permutation(len(self.train_data))
+
+      # Listes pour stocker les variables nécessaires
+      confidences = []
+      noisy_indices = []
+
+      
+      for idx in indices:
+          if self.train_labels[idx] in [3, 5]:
+              datapoint = self.train_data[idx]
+              predicted_class, confidence = self.predict_class(datapoint)
+              confidences.append(confidence)
+              noisy_indices.append(idx)
+      
+      sorted_indices = [idx for _, idx in sorted(zip(confidences, noisy_indices))]
+
+      # Le facteur 0.5 final est une conséquence du fait que len(sorted)= N/5, où N le nombre total d'images
+      #et on souhaite que chaque classe (ici chat et chien) soit bruitée à 'percent', soit ait percent*N/10 images dont les labels seront inversés
+      compteur_chat = 0
+      compteur_chien = 0
+      compteur_max = self.cfg_trainer['percent'] * len(sorted_indices)*0.5
+      for i, idx in enumerate(sorted_indices):     
+        if self.train_labels[idx] == 3 and compteur_chat<compteur_max:
+            self.train_labels[idx] = 5
+            compteur_chat += 1
+        elif self.train_labels[idx] == 5 and compteur_chien<compteur_max:
+            compteur_chien += 1
+            self.train_labels[idx] = 3
+      
+      print("symetric_noise has concluded without ERROR", compteur_chat, compteur_chien)
+
 
     def asymmetric_noise(self):
         self.train_labels_gt = copy.deepcopy(self.train_labels)
@@ -191,7 +307,7 @@ class CIFAR10_train(torchvision.datasets.CIFAR10):
         return len(self.train_data)
 
 class CIFAR10_val(torchvision.datasets.CIFAR10):
-
+    # A la demande du client, le set de validation ne fait pas l'object d'un bruitage
     def __init__(self, root, cfg_trainer, indexs, train=True,
                  transform=None, target_transform=None,
                  download=False):
@@ -202,13 +318,15 @@ class CIFAR10_val(torchvision.datasets.CIFAR10):
         # self.train_data = self.data[indexs]
         # self.train_labels = np.array(self.targets)[indexs]
         self.num_classes = 10
-        self.cfg_trainer = cfg_trainer
+        self.cfg_trainer = cfg_trainer  
         if train:
             self.train_data = self.data[indexs]
             self.train_labels = np.array(self.targets)[indexs]
+            self.train_data, self.train_labels= resample(self.train_data, self.train_labels, n_samples = 2000, random_state=888,stratify = self.train_labels)
         else:
             self.train_data = self.data
             self.train_labels = np.array(self.targets)
+            self.train_data, self.train_labels= resample(self.train_data, self.train_labels, n_samples = 2000, random_state=888,stratify = self.train_labels)
         self.train_labels_gt = self.train_labels.copy()
         
     def symmetric_noise(self):
