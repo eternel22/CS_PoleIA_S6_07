@@ -120,6 +120,7 @@ class CIFAR10_train(torchvision.datasets.CIFAR10):
     #les trois fonctions suivantes servent à construire un modèle standard de resnet-18, pré-entrainé sur image-net
     #et fine-tuné sur CIfar-10, pour faire les prédictions voulues par le client
     def fine_tune_resnet(self, trainloader, num_epochs=1):
+        print("prediction model being fine-tuned")
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.SGD(self.prediction_model.parameters(), lr=0.001, momentum=0.9)
 
@@ -137,6 +138,7 @@ class CIFAR10_train(torchvision.datasets.CIFAR10):
             print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {running_loss / len(trainloader):.4f}")
 
     def train_model(self):
+        print("prediction model training...")
         
         transform = transforms.Compose([
             transforms.RandomCrop(32, padding=4),
@@ -161,6 +163,7 @@ class CIFAR10_train(torchvision.datasets.CIFAR10):
     from torchvision import transforms
 
     def predict_class(self, datapoint):
+        print("predicting classes and computing confidence scores...")
         if self.prediction_model is None:
             raise RuntimeError("Model has not been trained yet. Call the 'train_model' method first.")
 
@@ -177,13 +180,14 @@ class CIFAR10_train(torchvision.datasets.CIFAR10):
             _, predicted = torch.max(output.data, 1)
             confidence = torch.softmax(output, dim=1)[0, predicted] * 100
 
-        print("prediction", predicted.item(), confidence.item())
+        
 
         return predicted.item(), confidence.item()
 
 
     def symmetric_noise(self):
-
+        
+      print("dataset being noisified...")  
       self.train_labels_gt = self.train_labels.copy()
       if self.prediction_model is None:
 
@@ -219,7 +223,7 @@ class CIFAR10_train(torchvision.datasets.CIFAR10):
             compteur_chien += 1
             self.train_labels[idx] = 3
       
-      print("symetric_noise has concluded without ERROR", compteur_chat, compteur_chien)
+      print("symetric_noise has concluded without error - the number of inverted pictures, for classes three and five, are", compteur_chat, compteur_chien)
 
 
     def asymmetric_noise(self):
