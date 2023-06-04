@@ -1,5 +1,8 @@
 # CS Pole IA - S6.07
 
+Le Groupe 7 du projet de S6 du Pôle IA de CentraleSupélec a permis en juin 2023 de reprendre l'implémentation de plusieurs méthodes de Sample Selection, ainsi que la comparaison de ces différentes méthodes.
+
+
 ## Organisation
 
 Le présent code se divise en 3 sections:
@@ -9,14 +12,15 @@ Le présent code se divise en 3 sections:
 
 ## Utilisation 
 
-Pour en faire usage, le notebook Kaggle ici lié permet de réaliser l'ensemble des imports nécessaires. La selection du code à éxécuter se fait:
--dans le cas de DivideMix, ...
--dans le cas de FINE, en se plaçant dans le répertoire fine, puis dans le sous-répertoir désiré : fine_dividemix, ou dynamic_selection pour toute autre méthode (détails dans les README concernés).
+Pour en faire usage, les notebooks Kaggle ici présents vous permettrons d'exécuter le code simplement, en copiant sur "Copier le notebook", en prenant garde à activer le GPU, et en modifiant le taux de bruitage si besoin :
+- Basic : https://www.kaggle.com/code/eternel22/cs-poleia-s6-p07-basic?scriptVersionId=131970624
+- DivideMix : https://www.kaggle.com/code/eternel22/poleia-dividemix?scriptVersionId=131916121
+- FINE : https://www.kaggle.com/code/eternel22/poleia-finerobustloss?scriptVersionId=132235616, en se plaçant dans le répertoire fine, puis dans le sous-répertoire désiré : fine_dividemix, ou dynamic_selection pour toute autre méthode (détails dans les README concernés).
 
 
 Si le lecteur désire utiliser les méthodes sans employer ce notebook:
--la version de python doit être 3.7
--nous recommandons d'employer les commandes suivantes (ou équivalent) pour répliquer les conditions employés dans notre rapport. Nous ne garantissons pas l'exécution du code avec d'autres versions des librairies concernées.
+- la version de python doit être de préférence à 3.7
+- nous recommandons d'employer les commandes suivantes (ou équivalent) pour répliquer les conditions employés dans notre rapport. Nous ne garantissons pas l'exécution du code avec d'autres versions des librairies concernées.
 
 ```
 
@@ -32,21 +36,15 @@ Si le lecteur désire utiliser les méthodes sans employer ce notebook:
 
 
 ```
-
-
 Veuillez alors vous placer dans le répertoire désiré, puis vous réferer au REAMDE de la section concernée.
 
 ## Commentaires
 
 Le code ici présent à été en grande partie forkée des GitHubs officiels des méthodes à étudier. Le lecteur les retrouvera aux liens suivants:
++ https://github.com/Kthyeon/FINE_official, de l'article : Paper, NeurIPS 21, FINE Samples for Learning with Noisy Labels, [[Arxiv](https://arxiv.org/abs/2102.11628)][[OpenReview](https://openreview.net/forum?id=QZpx42n0BWr)]
++ https://github.com/LiJunnan1992/DivideMix, de l'article : DivideMix: Learning with Noisy Labels as Semi-supervised Learning <a href="https://openreview.net/pdf?id=HJgExaVtwr">[pdf]</a>
 
-```
-
-https://github.com/Kthyeon/FINE_official
-
-https://github.com/LiJunnan1992/DivideMix
-
-```
+Ce projet est sous license MIT
 
 
 
