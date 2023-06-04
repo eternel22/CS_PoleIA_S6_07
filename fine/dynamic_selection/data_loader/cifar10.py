@@ -187,7 +187,7 @@ class CIFAR10_train(torchvision.datasets.CIFAR10):
 
     def symmetric_noise(self):
         
-      print("dataset being noisified...")  
+      print("dataset being noisified... requires approx. 10 minutes")  
       self.train_labels_gt = self.train_labels.copy()
       if self.prediction_model is None:
 
