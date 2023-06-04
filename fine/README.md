@@ -1,42 +1,33 @@
-# [Official] FINE Samples for Learning with Noisy Labels
-This repository is the official implementation of "FINE Samples for Learning with Noisy Labels" paper presented in NeurIPS 2021. New version of previous repository https://github.com/jaychoi12/FINE. Future code modifications and official developments will take place here. Thanks to the contributors in the previous repo.
-
-- Paper, NeurIPS 21, FINE Samples for Learning with Noisy Labels, [[Arxiv](https://arxiv.org/abs/2102.11628)][[OpenReview](https://openreview.net/forum?id=QZpx42n0BWr)]
-
-## Reference Codes
-We refer to some official implementation codes
-
- - https://github.com/bhanML/Co-teaching
- - https://github.com/LiJunnan1992/DivideMix
- - https://github.com/shengliu66/ELR
-
- 
-## Requirements
-- This codebase is written for `python3` (used `python 3.7.6` while implementing).
-- To install necessary python packages, run `pip install -r requirements.txt`.
+# FINE Samples for Learning with Noisy Labels
 
 
-## Training
+Cette section se divise en deux partie : 
 
-### Sample-Selection Approaches and Collaboration with Noise-Robust loss functions
- - Most code strucutres are similar with the original implementation code in https://github.com/bhanML/Co-teaching and https://github.com/shengliu66/ELR. 
- - If you want to train the model with `FINE`, move to the folder `dynamic_selection` and run the bash files by following the `README.md`.
- 
-### Semi-Supervised Approaches
-- Most codes are similar with the original implementation code in https://github.com/LiJunnan1992/DivideMix. 
-- If you want to train the model with `FINE` (`f-dividemix`), move to the folder `dividemix` and run the bash files by following the `README.md` in the `dividemix` folder.
+-dynamic_selection, qui permet d'entrainer des modèles avec FINE et F-Coteaching
+-fine-dividemix, qui permet d'entrainer des modèles avec F-DivideMix
+
+Dans le contexte du projet, une fonction de bruit particulière, détaillée dans le rapport, a été demandée. Celle-ci n'a été implémentée pour le moment que dans la section dynamic_selection, pour le dataloader Cifar-10, partagé par FINE et F-coteaching. Son implémentation pour F-DivideMix est actuellement en cours.
+
+Pour exécuter un entrainement, un fois dans la section désirée, appeller : 
+
+!bash scripts/"script désiré"
+
+ou "script désiré vaut : 
+
+f-coteaching.sh pour F-Coteaching, avec un bruit par défaut de 40%
+fine-cifar_X.sh, où X un taux de bruitage de 00,20,40,60 ou 80%.
+refinement_dynamic_c10.sh pour F-DivideMix, avec un taux de bruitage par défaut de 40%
+
+Dans tous les cas, les architectures par défaut sont ResNet18.
+
+Sous dynamic_selection, si le lecteur souhaite exécuter avec un taux de bruitage particulier, ou exécuter avec ResNet34, il peut modifier les arguments percent X, et arch rnX.
+Sous fine-dividemix, si le lecteur souhaite exécuter avec un taux de bruitage particulier, il peut modifier l'argument noise_mode sym --r X
 
 
-## Results
-You can reproduce all results in the paper with our code. All results have been described in our paper including Appendix. The results of our experiments are so numerous that it is difficult to post everything here. However, if you experiment several times by modifying the hyperparameter value in the .sh file, you will be able to reproduce all of our analysis.
 
-## Contact
- - Jongwoo Ko : Jongwoo.ko@kaist.ac.kr
- - Taehyeon Kim : potter32@kaist.ac.kr
+L'architecture de la section est entièrement reprise de celle du GitHub officiel de FINE. Des fonctions ont cependant été modifiées :
+-des erreurs empéchant l'exécution de l'entrainement on été corrigées sur main.py et dynamic_selection/data_loader/cifar10.py.
+-le bruitage désiré a été inclus dans le dataloader.
 
-<b>License</b>\
-This project is licensed under the terms of the MIT license.
-
-## Acknowledgements
-This work was supported by Institute of Information & communications Technology Planning &
-Evaluation (IITP) grant funded by the Korea government (MSIT) \[No.2019-0-00075, Artificial Intelligence Graduate School Program (KAIST)] and \[No. 2021-0-00907, Development of Adaptive and Lightweight Edge-Collaborative Analysis Technology for Enabling Proactively Immediate Response and Rapid Learning].
+Dans son état actuel, le modèle prédictif requis pour le bruitage est entraîné à plusieurs reprises, ce qui est inutile et représente une part importante du temps d'éxécution du code. Des pistes de solution sont à l'étude.
+Une conséquence de ce problème est limitation de son nombre d'époques à 1, ce qui nuit à la qualité du bruitage. Cependant, une machine plus puissante, ou un code amélioré, trouveront en ligne 157 de dynamic_selection/data_loader/cifar10.py ce nombre, qu'ils pourront augmenter pour accroître les performances.
