@@ -44,7 +44,7 @@ Le code ici présent à été en grande partie forkée des GitHubs officiels des
 + https://github.com/Kthyeon/FINE_official, de l'article : Paper, NeurIPS 21, FINE Samples for Learning with Noisy Labels, [[Arxiv](https://arxiv.org/abs/2102.11628)][[OpenReview](https://openreview.net/forum?id=QZpx42n0BWr)]
 + https://github.com/LiJunnan1992/DivideMix, de l'article : DivideMix: Learning with Noisy Labels as Semi-supervised Learning <a href="https://openreview.net/pdf?id=HJgExaVtwr">[pdf]</a>
 
-Ce projet est sous license MIT
+Ce dépôt est publié sous licence MIT.
 
 
 
