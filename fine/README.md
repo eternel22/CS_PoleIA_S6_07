@@ -1,6 +1,6 @@
 # FINE Samples for Learning with Noisy Labels
 
-
+## Organisation
 Cette section se divise en deux partie : 
 
 -dynamic_selection, qui permet d'entrainer des modèles avec FINE et F-Coteaching
@@ -8,6 +8,7 @@ Cette section se divise en deux partie :
 
 Dans le contexte du projet, une fonction de bruit particulière, détaillée dans le rapport, a été demandée. Celle-ci n'a été implémentée pour le moment que dans la section dynamic_selection, pour le dataloader Cifar-10, partagé par FINE et F-coteaching. Son implémentation pour F-DivideMix est actuellement en cours.
 
+## Utilisation
 Pour exécuter un entrainement, un fois dans la section désirée, appeller : 
 
 !bash scripts/"script désiré"
@@ -23,7 +24,7 @@ Dans tous les cas, les architectures par défaut sont ResNet18.
 Sous dynamic_selection, si le lecteur souhaite exécuter avec un taux de bruitage particulier, ou exécuter avec ResNet34, il peut modifier les arguments percent X, et arch rnX.
 Sous fine-dividemix, si le lecteur souhaite exécuter avec un taux de bruitage particulier, il peut modifier l'argument noise_mode sym --r X
 
-
+## Commentaires
 
 L'architecture de la section est entièrement reprise de celle du GitHub officiel de FINE. Des fonctions ont cependant été modifiées :
 -des erreurs empéchant l'exécution de l'entrainement on été corrigées sur main.py et dynamic_selection/data_loader/cifar10.py.
