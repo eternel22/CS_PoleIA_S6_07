@@ -3,10 +3,10 @@
 ## Organisation
 Cette section se divise en deux partie : 
 
--dynamic_selection, qui permet d'entrainer des modèles avec FINE et F-Coteaching
+-dynamic_selection, qui permet d'entrainer des modèles avec FINE , F-Coteaching et FINE-dynamic.
 -fine-dividemix, qui permet d'entrainer des modèles avec F-DivideMix
 
-Dans le contexte du projet, une fonction de bruit particulière, détaillée dans le rapport, a été demandée. Celle-ci n'a été implémentée pour le moment que dans la section dynamic_selection, pour le dataloader Cifar-10, partagé par FINE et F-coteaching. Son implémentation pour F-DivideMix est actuellement en cours.
+Dans le contexte du projet, une fonction de bruit particulière, détaillée dans le rapport, a été demandée. Celle-ci n'a été implémentée pour le moment que dans la section dynamic_selection, pour le dataloader Cifar-10, partagé par FINE, FINE-Dynamic (combiné à des fonction à perte robuste classqiues) et F-coteaching. Son implémentation pour F-DivideMix est actuellement en cours.
 
 ## Utilisation
 Pour exécuter un entrainement, un fois dans la section désirée, appeller : 
@@ -16,8 +16,11 @@ Pour exécuter un entrainement, un fois dans la section désirée, appeller :
 ou "script désiré vaut : 
 
 f-coteaching.sh pour F-Coteaching, avec un bruit par défaut de 40%
-fine-cifar_X.sh, où X un taux de bruitage de 00,20,40,60 ou 80%.
-refinement_dynamic_c10.sh pour F-DivideMix, avec un taux de bruitage par défaut de 40%
+/sample_selection_based/fine-cifar_X.sh, où X un taux de bruitage de 00,20,40,60 ou 80%.
+/sample_selection_based/refinement_dynamic_c10.sh pour F-DivideMix, avec un taux de bruitage par défaut de 40%
+/robust_loss/fine_dynamic_X.sh où X vaut gce, sce, elr, ce où les acronymes indiquent les fonctions avec perte robuste Cross Entropy (CE), Generalized Cross Entropy (GCE), Symmetric Cross Entropy (SCE), et Early-Learning Regularized (ELR).
+
+
 
 Dans tous les cas, les architectures par défaut sont ResNet18.
 
