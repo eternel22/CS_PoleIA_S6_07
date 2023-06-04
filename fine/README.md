@@ -30,13 +30,17 @@ f-coteaching.sh pour F-Coteaching
 Dans tous les cas, les architectures par défaut sont ResNet18, et les taux de bruitage sont de 40%.
 
 Sous dynamic_selection, si le lecteur souhaite exécuter avec un taux de bruitage particulier, ou exécuter avec ResNet34, il peut modifier les arguments "percent X", "et arch rnX".
+
 Sous fine-dividemix, si le lecteur souhaite exécuter avec un taux de bruitage particulier, il peut modifier l'argument noise_mode "sym --r X"
 
 ## Commentaires
 
 L'architecture de la section est entièrement reprise de celle du GitHub officiel de FINE. Des fonctions ont cependant été modifiées :
+
 -des erreurs empéchant l'exécution de l'entrainement on été corrigées sur main.py et dynamic_selection/data_loader/cifar10.py.
+
 -le bruitage désiré a été inclus dans le dataloader.
+
 
 Dans son état actuel, le modèle prédictif requis pour le bruitage est entraîné à plusieurs reprises, ce qui est inutile et représente une part importante du temps d'éxécution du code. Des pistes de solution sont à l'étude.
 Une conséquence de ce problème est limitation de son nombre d'époques à 1, ce qui nuit à la qualité du bruitage. Cependant, une machine plus puissante, ou un code amélioré, trouveront en ligne 157 de dynamic_selection/data_loader/cifar10.py ce nombre, qu'ils pourront augmenter pour accroître les performances.
