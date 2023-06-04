@@ -326,7 +326,7 @@ class CIFAR10_val(torchvision.datasets.CIFAR10):
         else:
             self.train_data = self.data
             self.train_labels = np.array(self.targets)
-            self.train_data, self.train_labels= resample(self.train_data, self.train_labels, n_samples = 2000, random_state=888,stratify = self.train_labels)
+            #self.train_data, self.train_labels= resample(self.train_data, self.train_labels, n_samples = 2000, random_state=888,stratify = self.train_labels)
         self.train_labels_gt = self.train_labels.copy()
         
     def symmetric_noise(self):

@@ -54,7 +54,7 @@
     },
 
     "trainer": {
-        "epochs": 150,
+        "epochs": 50,
         "epoch_decay_start": 80,
         "warmup": 0,
         "save_dir": "saved/",
