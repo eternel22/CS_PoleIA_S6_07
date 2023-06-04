@@ -15,14 +15,19 @@ Pour exécuter un entrainement, un fois dans la section désirée, appeller :
 
 ou "script désiré vaut : 
 
+...
+
 f-coteaching.sh pour F-Coteaching, avec un bruit par défaut de 40%
+
 /sample_selection_based/fine-cifar_X.sh, où X un taux de bruitage de 00,20,40,60 ou 80%.
+
 /sample_selection_based/refinement_dynamic_c10.sh pour F-DivideMix, avec un taux de bruitage par défaut de 40%
+
 /robust_loss/fine_dynamic_X.sh où X vaut gce, sce, elr, ce où les acronymes indiquent les fonctions avec perte robuste Cross Entropy (CE), Generalized Cross Entropy (GCE), Symmetric Cross Entropy (SCE), et Early-Learning Regularized (ELR).
 
+...
 
-
-Dans tous les cas, les architectures par défaut sont ResNet18.
+Dans tous les cas, les architectures par défaut sont ResNet18, et les taux de bruitage sont de 40%.
 
 Sous dynamic_selection, si le lecteur souhaite exécuter avec un taux de bruitage particulier, ou exécuter avec ResNet34, il peut modifier les arguments percent X, et arch rnX.
 Sous fine-dividemix, si le lecteur souhaite exécuter avec un taux de bruitage particulier, il peut modifier l'argument noise_mode sym --r X
