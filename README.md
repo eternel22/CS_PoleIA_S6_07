@@ -36,20 +36,17 @@ Si le lecteur désire utiliser les méthodes sans employer ce notebook:
 
 Veuillez alors vous placer dans le répertoire désiré, puis vous réferer au REAMDE de la section concernée.
 
+## Commentaires
+
+Le code ici présent à été en grande partie forkée des GitHubs officiels des méthodes à étudier. Le lecteur les retrouvera aux liens suivants:
+
+```
+
+https://github.com/Kthyeon/FINE_official
+
+https://github.com/LiJunnan1992/DivideMix
+
+```
 
 
 
-
-####
-
-Implémentations de plusieurs méthodes :
-+ basic : Sans méthodes particulières
-Résultats ici : https://www.kaggle.com/code/eternel22/poleia-basic?scriptVersionId=131912917
-+ fine : Paper, NeurIPS 21, <i>FINE Samples for Learning with Noisy Labels</i>, [[Arxiv](https://arxiv.org/abs/2102.11628)][[OpenReview](https://openreview.net/forum?id=QZpx42n0BWr)]
-+ dividemix : <i>DivideMix: Learning with Noisy Labels as Semi-supervised Learning</i> <a href="https://openreview.net/pdf?id=HJgExaVtwr">[pdf]</a>
-
-Pour déterminer les scores, on a entraîné un Resnet sur des données non bruités : 
-https://www.kaggle.com/code/eternel22/poleia-basic-bruitage?scriptVersionId=131835320
-*
-
-#####
