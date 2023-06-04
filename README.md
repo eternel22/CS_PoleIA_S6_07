@@ -1,10 +1,13 @@
 # CS Pole IA - S6.07
 
+## Organisation
+
 Le présent code se divise en 3 sections:
 - basic contient un simple ResNet18, sans méthode de Sample Selection
 - dividemix contient une implémentation de ResNet18, implémenté avec l'algorithme de Sample Selection DivideMix
 - fine contient une implémentation de ResNet (architecture modulable), implémenté avec l'algorithme de Sample Selection FINE, et certaines de ses variantes (voir le README de cette section pour obtenir des détails supplémentaires)
 
+## Utilisation 
 
 Pour en faire usage, le notebook Kaggle ici lié permet de réaliser l'ensemble des imports nécessaires. La selection du code à éxécuter se fait:
 -dans le cas de DivideMix, ...
@@ -27,7 +30,7 @@ Veuillez alors vous placer dans le répertoire désiré, puis vous réferer au R
 
 
 
-####"
+####
 
 Implémentations de plusieurs méthodes :
 + basic : Sans méthodes particulières
