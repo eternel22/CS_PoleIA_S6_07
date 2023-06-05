@@ -163,7 +163,7 @@ class CIFAR10_train(torchvision.datasets.CIFAR10):
     from torchvision import transforms
 
     def predict_class(self, datapoint):
-        print("predicting classes and computing confidence scores...")
+        #print("predicting classes and computing confidence scores...")
         if self.prediction_model is None:
             raise RuntimeError("Model has not been trained yet. Call the 'train_model' method first.")
 
